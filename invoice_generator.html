@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Invoice Generator — US / EU</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --accent:#0f62fe;
+    --muted:#6b7280;
+    --card-bg:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    padding:24px;
+    font-family:'Poppins',system-ui,Segoe UI,Roboto,Arial;
+    background:linear-gradient(135deg,#f6f8fb,#e6eefc);
+    color:#111827;
+  }
+
+  .app{
+    max-width:1200px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:1fr 520px;
+    gap:20px;
+    align-items:start;
+  }
+
+  .card{
+    background:var(--card-bg);
+    border-radius:12px;
+    padding:18px;
+    box-shadow:0 8px 24px rgba(13,27,62,0.08);
+  }
+
+  h1{font-family:'Roboto Slab',serif;font-size:18px;margin:0 0 10px}
+  label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
+  input[type="text"], input[type="date"], input[type="number"], textarea, select{
+    width:100%; padding:8px 10px; margin-top:6px; border:1px solid #e6e9ee; border-radius:8px; font-size:14px;
+    background:#fff;
+  }
+  textarea{resize:vertical}
+  .row{display:flex; gap:10px}
+  .row .col{flex:1}
+  button{background:var(--accent); color:#fff; border:0; padding:9px 14px; border-radius:8px; cursor:pointer; font-weight:600}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid #e6e9ee}
+  button:active{transform:translateY(1px)}
+  .small{font-size:13px;color:var(--muted)}
+
+  /* items input table */
+  table#itemsTable{width:100%; border-collapse:collapse; margin-top:12px}
+  table#itemsTable thead th{font-size:13px; color:var(--muted); text-align:left; padding:8px 6px; border-bottom:1px solid #eef2f7}
+  table#itemsTable td{padding:6px}
+  table#itemsTable input{width:100%; padding:6px 8px; font-size:14px}
+
+  /* preview */
+  .invoice-preview { padding:18px; }
+  .invoice-card{ background:var(--card-bg); padding:22px; border-radius:10px; font-family:'Roboto Slab',serif; color:#0f172a; box-shadow:0 6px 18px rgba(12,20,40,0.04) }
+  .invoice-head{ display:flex; justify-content:space-between; align-items:center; gap:12px }
+  .invoice-title{ font-size:22px; letter-spacing:0.6px }
+  .logo-img{ max-height:80px; max-width:220px; object-fit:contain; border-radius:6px }
+  .meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; align-items:start }
+  .from-to{ font-size:14px; line-height:1.4 }
+  .dates{ text-align:right; font-size:14px; line-height:1.6 }
+  .dates .row{ display:flex; gap:10px; justify-content:flex-end; align-items:center }
+  .dates .item{ min-width:120px; text-align:right }
+
+  .items-table{ width:100%; border-collapse:collapse; margin-top:16px; font-family:inherit }
+  .items-table th, .items-table td{ border:1px solid #eef2f7; padding:10px 8px; font-size:14px }
+  .items-table th{ background:#fbfdff; color:var(--muted); font-weight:600; text-align:left }
+  .items-table td.num{ text-align:right; font-family:'Poppins',sans-serif }
+
+  .summary{ margin-top:12px; width:100%; display:flex; justify-content:flex-end; gap:10px; flex-direction:column; max-width:420px }
+  .summary .line{ display:flex; justify-content:space-between; padding:6px 8px; font-size:14px }
+  .summary .total{ font-weight:700; font-size:18px; padding-top:6px }
+
+  .muted{ color:var(--muted) }
+
+  @media print{
+    body{background:#fff}
+    .app > *:not(.invoice-preview){ display:none }
+    .invoice-preview{ grid-column:1/-1 }
+    button,input,select,textarea{ display:none }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- LEFT: controls -->
+    <div class="card">
+      <h1>Invoice Generator</h1>
+
+      <label>Company Logo (PNG / JPG) — will appear top-right (max 220×80)</label>
+      <input id="logoUpload" type="file" accept="image/*" />
+
+      <label>Seller (From)</label>
+      <textarea id="seller" rows="3" placeholder="Company name, address, email, phone">Acme Co.
+123 Business Road
+business@acme.example
++1 555 0123</textarea>
+
+      <label>Buyer (Bill To)</label>
+      <textarea id="buyer" rows="3" placeholder="Client name, address, email">Client Ltd.
+45 Client Ave.
+client@example.com</textarea>
+
+      <div class="row" style="margin-top:10px">
+        <div class="col">
+          <label>Invoice #</label>
+          <input id="invoiceNo" type="text" value="INV-1001" />
+        </div>
+        <div class="col">
+          <label>Invoice Date</label>
+          <input id="invoiceDate" type="date" />
+        </div>
+        <div class="col">
+          <label>Due Date</label>
+          <input id="dueDate" type="date" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>Currency</label>
+          <select id="currency">
+            <option value="$">USD ($)</option>
+            <option value="€">EUR (€)</option>
+            <option value="£">GBP (£)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Region (style)</label>
+          <select id="region">
+            <option value="us">US Style</option>
+            <option value="eu">EU Style (VAT)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Default VAT / Tax %</label>
+          <input id="taxPct" type="number" value="0" step="0.01" />
+        </div>
+      </div>
+
+      <h3 style="margin-top:14px">Items</h3>
+      <table id="itemsTable" aria-label="items input table">
+        <thead id="itemsInputHead">
+          <!-- injected -->
+        </thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
+        <button id="addItem">+ Add item</button>
+        <button id="clearItems" class="ghost">Clear</button>
+      </div>
+
+      <label style="margin-top:12px">Discount (flat)</label>
+      <input id="discount" type="number" value="0" step="0.01" />
+
+      <label style="margin-top:12px">Notes</label>
+      <textarea id="notes" rows="3" placeholder="Payment terms, bank details">Thank you for your business. Payment due within 14 days.</textarea>
+
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+        <button id="updatePreview">Update Preview</button>
+        <button id="printBtn" class="ghost">Print</button>
+        <button id="downloadPDF">Download PDF</button>
+        <button id="saveJson" class="ghost">Save JSON</button>
+        <button id="loadJson" class="ghost">Load JSON</button>
+      </div>
+
+      <!-- EU-only extra fields -->
+      <div id="euExtras" style="margin-top:12px; display:none">
+        <label>Seller VAT number</label>
+        <input id="sellerVAT" type="text" placeholder="VAT / Tax ID" />
+        <label>Buyer VAT number</label>
+        <input id="buyerVAT" type="text" placeholder="Client VAT ID" />
+        <label>Bank details (IBAN / SWIFT)</label>
+        <textarea id="bankDetails" rows="2" placeholder="IBAN, SWIFT, bank name"></textarea>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: preview -->
+    <div class="card invoice-preview">
+      <div class="invoice-card" id="previewArea" role="document" aria-label="Invoice preview">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+
+  </div>
+
+<!-- libs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+(function(){
+  // helpers
+  const $ = id => document.getElementById(id);
+  const escapeHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const todayISO = (d=new Date()) => d.toISOString().slice(0,10);
+  const addDaysISO = (days) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0,10);
+  };
+
+  // elements
+  const logoUpload = $('logoUpload');
+  const seller = $('seller');
+  const buyer = $('buyer');
+  const invoiceNo = $('invoiceNo');
+  const invoiceDate = $('invoiceDate');
+  const dueDate = $('dueDate');
+  const currency = $('currency');
+  const region = $('region');
+  const taxPct = $('taxPct');
+  const discount = $('discount');
+  const notes = $('notes');
+  const itemsInputHead = $('itemsInputHead');
+  const itemsBody = $('itemsBody');
+  const addItemBtn = $('addItem');
+  const clearItemsBtn = $('clearItems');
+  const updatePreviewBtn = $('updatePreview');
+  const printBtn = $('printBtn');
+  const downloadPDFBtn = $('downloadPDF');
+  const previewArea = $('previewArea');
+  const euExtras = $('euExtras');
+  const sellerVAT = $('sellerVAT');
+  const buyerVAT = $('buyerVAT');
+  const bankDetails = $('bankDetails');
+  const saveJsonBtn = $('saveJson');
+  const loadJsonBtn = $('loadJson');
+
+  // state
+  let logoDataUrl = '';
+
+  // init dates
+  invoiceDate.value = todayISO();
+  dueDate.value = addDaysISO(14);
+
+  // logo upload
+  logoUpload.addEventListener('change', e=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      logoDataUrl = reader.result;
+      updatePreview();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // render items input header based on region
+  function renderItemsInputHead(){
+    if(region.value === 'eu'){
+      itemsInputHead.innerHTML = `<tr>
+        <th style="width:40%">Description</th>
+        <th style="width:10%">Qty</th>
+        <th style="width:15%">Unit price</th>
+        <th style="width:10%">VAT %</th>
+        <th style="width:15%">Line net</th>
+        <th style="width:10%"></th>
+      </tr>`;
+    } else {
+      itemsInputHead.innerHTML = `<tr>
+        <th style="width:60%">Description</th>
+        <th style="width:10%">Qty</th>
+        <th style="width:15%">Unit price</th>
+        <th style="width:10%"></th>
+      </tr>`;
+    }
+  }
+
+  // create row - when region changes we'll rebuild rows from data so row format matches region
+  function createRow(desc='Service / Product', qty=1, price=0, vat= (region.value === 'eu' ? parseFloat(taxPct.value || 0) : 0)){
+    const st = region.value;
+    const tr = document.createElement('tr');
+    if(st === 'eu'){
+      tr.innerHTML = `
+        <td><input class="desc" type="text" value="${escapeHtml(desc)}" /></td>
+        <td><input class="qty" type="number" min="0" step="0.01" value="${qty}" /></td>
+        <td><input class="price" type="number" min="0" step="0.01" value="${price}" /></td>
+        <td><input class="vat" type="number" min="0" step="0.01" value="${vat}" /></td>
+        <td class="line-net small">${(qty*price).toFixed(2)}</td>
+        <td class="text-right"><button class="remove ghost" type="button">Remove</button></td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td><input class="desc" type="text" value="${escapeHtml(desc)}" /></td>
+        <td><input class="qty" type="number" min="0" step="0.01" value="${qty}" /></td>
+        <td><input class="price" type="number" min="0" step="0.01" value="${price}" /></td>
+        <td class="text-right"><button class="remove ghost" type="button">Remove</button></td>
+      `;
+    }
+
+    // attach events
+    tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updatePreview));
+    const rem = tr.querySelector('.remove');
+    if(rem) rem.addEventListener('click', ()=>{ tr.remove(); updatePreview(); });
+    itemsBody.appendChild(tr);
+    updatePreview();
+  }
+
+  // collect items from inputs and calculate lines
+  function collectItems(){
+    const rows = Array.from(itemsBody.querySelectorAll('tr'));
+    const st = region.value;
+    const items = rows.map(r => {
+      const desc = r.querySelector('.desc') ? r.querySelector('.desc').value : '';
+      const qty = r.querySelector('.qty') ? parseFloat(r.querySelector('.qty').value) || 0 : 0;
+      const price = r.querySelector('.price') ? parseFloat(r.querySelector('.price').value) || 0 : 0;
+      if(st === 'eu'){
+        const vatPct = r.querySelector('.vat') ? parseFloat(r.querySelector('.vat').value) || 0 : (parseFloat(taxPct.value)||0);
+        const net = qty * price;
+        const vat = net * vatPct / 100;
+        const gross = net + vat;
+        return {desc, qty, price, vatPct, net, vat, gross};
+      } else {
+        const line = qty * price;
+        return {desc, qty, price, line};
+      }
+    });
+    return items;
+  }
+
+  // update preview rendering
+  function updatePreview(){
+    renderItemsInputHead(); // ensure head matches region
+    euExtras.style.display = region.value === 'eu' ? 'block' : 'none';
+
+    const items = collectItems();
+    const c = currency.value || '$';
+    const disc = parseFloat(discount.value) || 0;
+
+    // compute numbers
+    if(region.value === 'eu'){
+      const net = items.reduce((s,i)=> s + (i.net || 0), 0);
+      const vatTotal = items.reduce((s,i)=> s + (i.vat || 0), 0);
+      const gross = items.reduce((s,i)=> s + (i.gross || 0), 0);
+      renderPreviewEU({net, vatTotal, gross, items, disc, c});
+    } else {
+      const subtotal = items.reduce((s,i)=> s + (i.line || 0), 0);
+      const tax = subtotal * (parseFloat(taxPct.value || 0) / 100);
+      const total = subtotal + tax - disc;
+      renderPreviewUS({subtotal, tax, total, items, disc, c});
+    }
+  }
+
+  // render preview US style
+  function renderPreviewUS({subtotal, tax, total, items, disc, c}){
+    const sHTML = `
+      <div class="invoice-head">
+        <div class="invoice-title"><strong>INVOICE</strong><div class="small">Invoice # ${escapeHtml(invoiceNo.value || '')}</div></div>
+        <div>${logoDataUrl ? `<img class="logo-img" src="${logoDataUrl}" alt="Logo" />` : ''}</div>
+      </div>
+
+      <div class="meta-grid">
+        <div class="from-to">
+          <div><strong>From</strong></div>
+          <div class="small">${escapeHtml(seller.value).replace(/\n/g,'<br/>')}</div>
+        </div>
+        <div class="dates">
+          <div class="row"><div class="item small">Date</div><div class="item">${escapeHtml(invoiceDate.value || '')}</div></div>
+          <div class="row"><div class="item small">Due</div><div class="item">${escapeHtml(dueDate.value || '')}</div></div>
+          <div style="margin-top:8px"><strong>Bill To</strong></div>
+          <div class="small" style="margin-top:4px">${escapeHtml(buyer.value).replace(/\n/g,'<br/>')}</div>
+        </div>
+      </div>
+
+      <table class="items-table" aria-label="invoice items">
+        <thead><tr><th>Description</th><th style="width:80px">Qty</th><th style="width:120px">Unit</th><th style="width:120px">Total</th></tr></thead>
+        <tbody>
+          ${items.map(i => `<tr>
+              <td>${escapeHtml(i.desc)}</td>
+              <td class="num">${(i.qty).toFixed(2).replace(/\.00$/,'')}</td>
+              <td class="num">${c}${(i.price).toFixed(2)}</td>
+              <td class="num">${c}${(i.line).toFixed(2)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div class="line"><div class="small">Subtotal</div><div>${c}${subtotal.toFixed(2)}</div></div>
+        <div class="line"><div class="small">Tax (${parseFloat(taxPct.value || 0).toFixed(2)}%)</div><div>${c}${tax.toFixed(2)}</div></div>
+        <div class="line"><div class="small">Discount</div><div>-${c}${disc.toFixed(2)}</div></div>
+        <div class="line total"><div class="small">Total</div><div>${c}${total.toFixed(2)}</div></div>
+      </div>
+
+      <div style="margin-top:12px"><strong>Notes</strong><div class="small">${escapeHtml(notes.value).replace(/\n/g,'<br/>')}</div></div>
+    `;
+    previewArea.innerHTML = sHTML;
+  }
+
+  // render preview EU style
+  function renderPreviewEU({net, vatTotal, gross, items, disc, c}){
+    const sellerVatHtml = sellerVAT.value ? `<div class="small"><strong>Seller VAT:</strong> ${escapeHtml(sellerVAT.value)}</div>` : '';
+    const buyerVatHtml = buyerVAT.value ? `<div class="small"><strong>Buyer VAT:</strong> ${escapeHtml(buyerVAT.value)}</div>` : '';
+    const bankHtml = bankDetails.value ? `<div style="margin-top:8px" class="small"><strong>Bank:</strong><br>${escapeHtml(bankDetails.value).replace(/\n/g,'<br/>')}</div>` : '';
+
+    const sHTML = `
+      <div class="invoice-head">
+        <div class="invoice-title"><strong>INVOICE</strong><div class="small">Invoice # ${escapeHtml(invoiceNo.value || '')}</div></div>
+        <div>${logoDataUrl ? `<img class="logo-img" src="${logoDataUrl}" alt="Logo" />` : ''}</div>
+      </div>
+
+      <div class="meta-grid">
+        <div class="from-to">
+          <div><strong>From</strong></div>
+          <div class="small">${escapeHtml(seller.value).replace(/\n/g,'<br/>')}</div>
+          ${sellerVatHtml}
+        </div>
+        <div class="dates">
+          <div class="row"><div class="item small">Date</div><div class="item">${escapeHtml(invoiceDate.value || '')}</div></div>
+          <div class="row"><div class="item small">Due</div><div class="item">${escapeHtml(dueDate.value || '')}</div></div>
+          <div style="margin-top:8px"><strong>Bill To</strong></div>
+          <div class="small" style="margin-top:4px">${escapeHtml(buyer.value).replace(/\n/g,'<br/>')}</div>
+          ${buyerVatHtml}
+          ${bankHtml}
+        </div>
+      </div>
+
+      <table class="items-table" aria-label="invoice items">
+        <thead><tr><th>Description</th><th style="width:70px">Qty</th><th style="width:120px">Unit</th><th style="width:120px">Net</th><th style="width:80px">VAT %</th><th style="width:120px">VAT</th><th style="width:120px">Gross</th></tr></thead>
+        <tbody>
+          ${items.map(i => `<tr>
+              <td>${escapeHtml(i.desc)}</td>
+              <td class="num">${(i.qty).toFixed(2).replace(/\.00$/,'')}</td>
+              <td class="num">${c}${(i.price).toFixed(2)}</td>
+              <td class="num">${c}${(i.net).toFixed(2)}</td>
+              <td class="num">${(i.vatPct).toFixed(2)}%</td>
+              <td class="num">${c}${(i.vat).toFixed(2)}</td>
+              <td class="num">${c}${(i.gross).toFixed(2)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div class="line"><div class="small">Net</div><div>${c}${net.toFixed(2)}</div></div>
+        <div class="line"><div class="small">VAT</div><div>${c}${vatTotal.toFixed(2)}</div></div>
+        <div class="line"><div class="small">Discount</div><div>-${c}${disc.toFixed(2)}</div></div>
+        <div class="line total"><div class="small">Total</div><div>${c}${(gross - disc).toFixed(2)}</div></div>
+      </div>
+
+      <div style="margin-top:12px"><strong>Notes</strong><div class="small">${escapeHtml(notes.value).replace(/\n/g,'<br/>')}</div></div>
+    `;
+    previewArea.innerHTML = sHTML;
+  }
+
+  // PDF generator that fits to A4 single page (scale down if needed)
+  async function exportPDF(){
+    updatePreview();
+    const el = previewArea;
+    // give a short time for images (logo) to be ready
+    await new Promise(res => setTimeout(res, 120));
+    const canvas = await html2canvas(el, {scale:2, useCORS:true, allowTaint:true});
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    // scale to fit A4 while preserving aspect ratio
+    const ratio = Math.min(pdfW / canvas.width, pdfH / canvas.height);
+    const imgW = canvas.width * ratio;
+    const imgH = canvas.height * ratio;
+    pdf.addImage(imgData, 'PNG', (pdfW - imgW) / 2, 20, imgW, imgH);
+    const fname = (invoiceNo.value ? invoiceNo.value.trim() : 'invoice') + '.pdf';
+    pdf.save(fname);
+  }
+
+  // Save / Load JSON (simple)
+  function saveJSON(){
+    const data = {
+      seller: seller.value, buyer: buyer.value,
+      invoiceNo: invoiceNo.value, invoiceDate: invoiceDate.value, dueDate: dueDate.value,
+      currency: currency.value, region: region.value, taxPct: taxPct.value, discount: discount.value,
+      notes: notes.value, sellerVAT: sellerVAT.value, buyerVAT: buyerVAT.value, bankDetails: bankDetails.value,
+      logoDataUrl,
+      items: collectItems()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (invoiceNo.value || 'invoice') + '.invoice.json';
+    a.click();
+  }
+
+  function loadJSONFromFile(file){
+    if(!file) return;
+    const r = new FileReader();
+    r.onload = e => {
+      try{
+        const obj = JSON.parse(e.target.result);
+        seller.value = obj.seller || '';
+        buyer.value = obj.buyer || '';
+        invoiceNo.value = obj.invoiceNo || '';
+        invoiceDate.value = obj.invoiceDate || todayISO();
+        dueDate.value = obj.dueDate || addDaysISO(14);
+        currency.value = obj.currency || '$';
+        region.value = obj.region || 'us';
+        taxPct.value = obj.taxPct || 0;
+        discount.value = obj.discount || 0;
+        notes.value = obj.notes || '';
+        sellerVAT.value = obj.sellerVAT || '';
+        buyerVAT.value = obj.buyerVAT || '';
+        bankDetails.value = obj.bankDetails || '';
+        logoDataUrl = obj.logoDataUrl || '';
+        // rebuild items for current region
+        itemsBody.innerHTML = '';
+        const items = obj.items || [];
+        items.forEach(it => {
+          if(region.value === 'eu'){
+            createRow(it.desc || '', it.qty || 1, it.price || 0, it.vatPct || (parseFloat(taxPct.value)||0));
+          } else {
+            createRow(it.desc || '', it.qty || 1, it.price || 0, 0);
+          }
+        });
+        updatePreview();
+      } catch(err){
+        alert('Invalid JSON file');
+      }
+    };
+    r.readAsText(file);
+  }
+
+  // event bindings
+  addItemBtn.addEventListener('click', ()=> createRow('New item',1,0));
+  clearItemsBtn.addEventListener('click', ()=> { itemsBody.innerHTML=''; createRow('Service / Product',1,0); updatePreview(); });
+  updatePreviewBtn.addEventListener('click', updatePreview);
+  printBtn.addEventListener('click', ()=>{ updatePreview(); window.print(); });
+  downloadPDFBtn.addEventListener('click', exportPDF);
+  saveJsonBtn.addEventListener('click', saveJSON);
+  loadJsonBtn.addEventListener('click', ()=>{
+    const input = document.createElement('input'); input.type='file'; input.accept='application/json';
+    input.onchange = e => {
+      const f = e.target.files[0];
+      if(f) loadJSONFromFile(f);
+    };
+    input.click();
+  });
+
+  // auto-update on input changes
+  [seller,buyer,invoiceNo,invoiceDate,dueDate,currency,region,taxPct,discount,notes,sellerVAT,buyerVAT,bankDetails].forEach(el=>{
+    el.addEventListener('input', ()=> {
+      if(el === region){
+        // rebuild items to match new region columns
+        const currentItems = collectItems();
+        const saved = currentItems.map(it => ({...it}));
+        itemsBody.innerHTML = '';
+        saved.forEach(it => {
+          if(region.value === 'eu') createRow(it.desc || '', it.qty || 1, it.price || 0, it.vatPct || parseFloat(taxPct.value || 0));
+          else createRow(it.desc || '', it.qty || 1, it.price || 0, 0);
+        });
+      }
+      updatePreview();
+    });
+  });
+
+  // init UI
+  renderItemsInputHead();
+  // initial one sample row
+  createRow('Consulting services', 2, 150, parseFloat(taxPct.value||0));
+  updatePreview();
+
+})();
+</script>
+</body>
+</html>
