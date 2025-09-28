@@ -1,50 +1,55 @@
-# BelcantoRest Invoice Generator
+# 💼 Professional Invoice Generator (US / EU)
 
-BelcantoRest is a simple, clean, and intuitive web application for generating professional invoices in US or EU format. It's ideal for freelancers, small businesses, or anyone who needs to issue invoices quickly and efficiently.
+A modern **web-based invoice generator** built with **HTML, CSS, and JavaScript**.  
+Create, preview, and export **professional invoices** in both **US** and **EU (VAT)** styles.  
+Works directly in your browser — no installation, no backend, fully offline.
+
+🔗 **Live** [belcantorest.me](https://www.belcantorest.me/)  
+📦 **Source Code:** [GitHub Repository](https://github.com/renocmon-cloud/Invoice)
 
 ---
 
-## 🔍 Features
-
-- Enter seller (“From”) and buyer (“Bill To”) information, including company name, contact, VAT/Tax ID, bank/IBAN/SWIFT details.  
-- Add multiple invoice items with description, quantity, unit price.  
-- Apply discounts (flat amount).  
-- Choose region/style: **US Style** or **EU Style (VAT)**.  
-- Support for multiple currencies: USD, EUR, GBP.  
-- Insert invoice number, invoice date, due date.  
-- Add notes to invoice (e.g. “Thank you for your business…”).  
-- Preview, print, or download invoice as PDF.  
-- Save the invoice data as JSON and load it later.
+## ✨ Features
+- 📌 Add seller & buyer details  
+- 🏷 Custom invoice number, dates, and notes  
+- 💱 Multiple currencies (USD, EUR, GBP, INR, JPY, BTC, etc.)  
+- 🌍 US & EU styles (with VAT support and extra EU fields: VAT IDs, IBAN/SWIFT)  
+- 📊 Smart item management (add, duplicate, remove, clear all, auto-calculation)  
+- 🏦 Bank & payment details  
+- 📲 Automatic **QR code** generation for payments  
+- 🖨 Export options: **PDF download** or direct **Print**  
+- 💾 Save/Load invoice data as **JSON**  
+- 🖼 Upload company logo for professional branding  
 
 ---
 
 ## 🚀 How to Use
-
-1. Open [belcantorest.me](https://www.belcantorest.me/)  
-2. Fill in the seller and buyer details.  
-3. Add items and any discounts or notes.  
-4. Select currency and style (US / EU).  
-5. Preview your invoice.  
-6. Download as PDF, print it, or save the data in JSON format for later use.  
-
----
-
-## 💡 Why BelcantoRest?
-
-- **Fast & Easy** — everything you need to create an invoice in one place.  
-- **Flexible** — different styles (US / EU), multiple currencies, save and load options.  
-- **Clean Design** — minimalist, distraction-free interface focused on functionality.  
+1. Open the [live demo](https://www.belcantorest.me/) or clone this repo.  
+2. Fill in your company & client information.  
+3. Add invoice items, taxes, and discounts.  
+4. Customize payment details (bank, SWIFT, reference).  
+5. Preview invoice instantly.  
+6. Export to **PDF** or print directly.  
 
 ---
 
-## 📄 License
-
-MIT License (or choose another license suitable for your project).
+## 🛠 Tech Stack
+- **HTML5 + CSS3** — responsive, print-ready design  
+- **Vanilla JavaScript** — no frameworks required  
+- [html2canvas](https://github.com/niklasvh/html2canvas) — HTML to image  
+- [jsPDF](https://github.com/parallax/jsPDF) — PDF export  
+- [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) — QR codes  
 
 ---
 
-## 👤 Author / Contact
+## 📷 Screenshots
+*(Add screenshots here — e.g., preview of invoice and editing panel)*  
 
-Created by renocmon-cloud  
-Website: [https://www.belcantorest.me/](https://www.belcantorest.me/)  
+---
 
+## 📜 License
+This project is released under the **MIT License** — free to use, modify, and distribute.  
+
+---
+
+💡 Perfect for **freelancers, small businesses, and startups** who need quick, professional invoices without expensive SaaS tools.
