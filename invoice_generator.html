@@ -3,118 +3,729 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Invoice Generator — US / EU</title>
+<title>Professional Invoice Generator — US / EU</title>
 
 <!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto+Slab:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- QR Code Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 <style>
   :root{
-    --accent:#0f62fe;
+    --accent:#4f46e5;
+    --accent-dark:#4338ca;
+    --accent-light:#c7d2fe;
     --muted:#6b7280;
+    --muted-light:#9ca3af;
+    --muted-bg:#f9fafb;
     --card-bg:#ffffff;
+    --border:#e5e7eb;
+    --border-light:#f3f4f6;
+    --error:#dc2626;
+    --error-light:#fef2f2;
+    --success:#16a34a;
+    --success-light:#f0fdf4;
+    --warning:#f59e0b;
+    --warning-light:#fffbeb;
+    --radius:12px;
+    --radius-sm:8px;
+    --shadow:0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05);
+    --shadow-lg:0 20px 40px -10px rgba(0,0,0,0.15);
+    --transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  
   *{box-sizing:border-box}
+  
   body{
     margin:0;
-    padding:24px;
+    padding:0;
     font-family:'Poppins',system-ui,Segoe UI,Roboto,Arial;
-    background:linear-gradient(135deg,#f6f8fb,#e6eefc);
-    color:#111827;
+    background:linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color:#1e293b;
+    min-height:100vh;
+    line-height:1.6;
   }
 
-  .app{
-    max-width:1200px;
+  .app-container{
+    max-width:1400px;
     margin:0 auto;
+    padding:24px;
     display:grid;
     grid-template-columns:1fr 520px;
-    gap:20px;
+    gap:28px;
     align-items:start;
   }
 
   .card{
     background:var(--card-bg);
-    border-radius:12px;
-    padding:18px;
-    box-shadow:0 8px 24px rgba(13,27,62,0.08);
+    border-radius:var(--radius);
+    padding:24px;
+    box-shadow:var(--shadow);
+    transition:var(--transition);
+    border:1px solid var(--border-light);
+  }
+  
+  .card:hover{
+    box-shadow:var(--shadow-lg);
+    transform:translateY(-2px);
+  }
+  
+  .card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--border-light);
+  }
+  
+  h1{
+    font-family:'Roboto Slab',serif;
+    font-size:24px;
+    font-weight:600;
+    margin:0;
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  
+  h1:before{
+    content:'';
+    display:block;
+    width:4px;
+    height:24px;
+    background:var(--accent);
+    border-radius:2px;
+  }
+  
+  h3{
+    font-family:'Roboto Slab',serif;
+    font-size:18px;
+    font-weight:600;
+    margin:20px 0 12px;
+    color:#374151;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  
+  h3:before{
+    content:'';
+    display:block;
+    width:3px;
+    height:18px;
+    background:var(--accent-light);
+    border-radius:2px;
+  }
+  
+  label{
+    display:block;
+    font-size:14px;
+    color:var(--muted);
+    margin-top:16px;
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  
+  label:before{
+    content:'•';
+    color:var(--accent);
+    font-size:18px;
+  }
+  
+  input[type="text"], input[type="date"], input[type="number"], textarea, select{
+    width:100%;
+    padding:12px 14px;
+    margin-top:8px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    font-size:14px;
+    background:#fff;
+    transition:var(--transition);
+    font-family:inherit;
+  }
+  
+  input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(79, 70, 229, 0.1);
+    transform:translateY(-1px);
+  }
+  
+  textarea{
+    resize:vertical;
+    min-height:80px;
+    line-height:1.5;
+  }
+  
+  .row{
+    display:flex;
+    gap:12px;
+  }
+  
+  .row .col{
+    flex:1;
+  }
+  
+  button{
+    background:var(--accent);
+    color:#fff;
+    border:0;
+    padding:12px 20px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+    transition:var(--transition);
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:inherit;
+  }
+  
+  button:hover{
+    background:var(--accent-dark);
+    transform:translateY(-2px);
+    box-shadow:0 4px 12px rgba(79, 70, 229, 0.3);
+  }
+  
+  button:active{
+    transform:translateY(0);
+  }
+  
+  button.ghost{
+    background:transparent;
+    color:var(--accent);
+    border:1px solid var(--accent);
+  }
+  
+  button.ghost:hover{
+    background:var(--accent-light);
+  }
+  
+  button:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+    transform:none !important;
+  }
+  
+  button.loading{
+    position:relative;
+    color:transparent;
+  }
+  
+  button.loading::after{
+    content:'';
+    position:absolute;
+    width:18px;
+    height:18px;
+    border:2px solid #ffffff;
+    border-radius:50%;
+    border-right-color:transparent;
+    animation:spin 1s linear infinite;
+  }
+  
+  button.ghost.loading::after{
+    border-color:var(--accent);
+    border-right-color:transparent;
+  }
+  
+  .small{
+    font-size:13px;
+    color:var(--muted);
+  }
+  
+  .error{
+    color:var(--error);
+    font-size:12px;
+    margin-top:6px;
+    display:none;
+    padding:6px 10px;
+    background:var(--error-light);
+    border-radius:4px;
+    border-left:3px solid var(--error);
+  }
+  
+  .success{
+    color:var(--success);
+    font-size:12px;
+    margin-top:6px;
+    display:none;
+    padding:6px 10px;
+    background:var(--success-light);
+    border-radius:4px;
+    border-left:3px solid var(--success);
   }
 
-  h1{font-family:'Roboto Slab',serif;font-size:18px;margin:0 0 10px}
-  label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
-  input[type="text"], input[type="date"], input[type="number"], textarea, select{
-    width:100%; padding:8px 10px; margin-top:6px; border:1px solid #e6e9ee; border-radius:8px; font-size:14px;
-    background:#fff;
+  @keyframes spin{
+    to{transform:rotate(360deg)}
   }
-  textarea{resize:vertical}
-  .row{display:flex; gap:10px}
-  .row .col{flex:1}
-  button{background:var(--accent); color:#fff; border:0; padding:9px 14px; border-radius:8px; cursor:pointer; font-weight:600}
-  button.ghost{background:#fff;color:var(--accent);border:1px solid #e6e9ee}
-  button:active{transform:translateY(1px)}
-  .small{font-size:13px;color:var(--muted)}
 
   /* items input table */
-  table#itemsTable{width:100%; border-collapse:collapse; margin-top:12px}
-  table#itemsTable thead th{font-size:13px; color:var(--muted); text-align:left; padding:8px 6px; border-bottom:1px solid #eef2f7}
-  table#itemsTable td{padding:6px}
-  table#itemsTable input{width:100%; padding:6px 8px; font-size:14px}
+  table#itemsTable{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    margin-top:16px;
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  table#itemsTable thead th{
+    font-size:13px;
+    color:var(--muted);
+    text-align:left;
+    padding:12px 10px;
+    background:var(--muted-bg);
+    font-weight:600;
+    border-bottom:1px solid var(--border);
+  }
+  
+  table#itemsTable td{
+    padding:10px;
+    border-bottom:1px solid var(--border-light);
+    background:#fff;
+  }
+  
+  table#itemsTable tr:last-child td{
+    border-bottom:none;
+  }
+  
+  table#itemsTable input{
+    width:100%;
+    padding:8px 10px;
+    font-size:14px;
+    margin:0;
+    border:1px solid var(--border);
+    border-radius:6px;
+    transition:var(--transition);
+  }
+  
+  table#itemsTable input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px rgba(79, 70, 229, 0.1);
+  }
+  
+  table#itemsTable .actions{
+    display:flex;
+    gap:6px;
+    justify-content:flex-end;
+  }
+  
+  table#itemsTable .actions button{
+    padding:6px 10px;
+    font-size:12px;
+  }
+
+  /* payment details section */
+  .payment-section{
+    margin-top:20px;
+    padding:16px;
+    background:var(--muted-bg);
+    border-radius:var(--radius-sm);
+    border-left:4px solid var(--accent);
+  }
+  
+  .payment-details{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:12px;
+  }
+  
+  .qr-code-container{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    background:#fff;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--border-light);
+  }
+  
+  #qrCode{
+    width:140px;
+    height:140px;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    border-radius:8px;
+    padding:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  .payment-info{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  
+  .payment-field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  
+  .payment-field label{
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    margin:0;
+  }
+  
+  .payment-field label:before{
+    display:none;
+  }
+  
+  .payment-field input, .payment-field textarea{
+    margin:0;
+    font-size:13px;
+    padding:8px 10px;
+  }
 
   /* preview */
-  .invoice-preview { padding:18px; }
-  .invoice-card{ background:var(--card-bg); padding:22px; border-radius:10px; font-family:'Roboto Slab',serif; color:#0f172a; box-shadow:0 6px 18px rgba(12,20,40,0.04) }
-  .invoice-head{ display:flex; justify-content:space-between; align-items:center; gap:12px }
-  .invoice-title{ font-size:22px; letter-spacing:0.6px }
-  .logo-img{ max-height:80px; max-width:220px; object-fit:contain; border-radius:6px }
-  .meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; align-items:start }
-  .from-to{ font-size:14px; line-height:1.4 }
-  .dates{ text-align:right; font-size:14px; line-height:1.6 }
-  .dates .row{ display:flex; gap:10px; justify-content:flex-end; align-items:center }
-  .dates .item{ min-width:120px; text-align:right }
+  .invoice-preview{
+    padding:20px;
+    position:sticky;
+    top:24px;
+  }
+  
+  .invoice-card{
+    background:var(--card-bg);
+    padding:32px;
+    border-radius:var(--radius);
+    font-family:'Roboto Slab',serif;
+    color:#0f172a;
+    box-shadow:0 8px 20px rgba(12,20,40,0.08);
+    min-height:740px;
+    display:flex;
+    flex-direction:column;
+  }
+  
+  .invoice-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:28px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--border-light);
+  }
+  
+  .invoice-title{
+    font-size:28px;
+    letter-spacing:0.5px;
+    margin-bottom:8px;
+    color:var(--accent);
+    font-weight:600;
+  }
+  
+  .logo-img{
+    max-height:80px;
+    max-width:220px;
+    object-fit:contain;
+    border-radius:6px;
+  }
+  
+  .meta-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    margin-top:16px;
+    align-items:start;
+  }
+  
+  .from-to{
+    font-size:14px;
+    line-height:1.6;
+  }
+  
+  .dates{
+    text-align:right;
+    font-size:14px;
+    line-height:1.6;
+  }
+  
+  .dates .row{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  
+  .dates .item{
+    min-width:120px;
+    text-align:right;
+  }
 
-  .items-table{ width:100%; border-collapse:collapse; margin-top:16px; font-family:inherit }
-  .items-table th, .items-table td{ border:1px solid #eef2f7; padding:10px 8px; font-size:14px }
-  .items-table th{ background:#fbfdff; color:var(--muted); font-weight:600; text-align:left }
-  .items-table td.num{ text-align:right; font-family:'Poppins',sans-serif }
+  .items-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:28px;
+    font-family:inherit;
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+  }
+  
+  .items-table th, .items-table td{
+    border:1px solid var(--border-light);
+    padding:14px 12px;
+    font-size:14px;
+  }
+  
+  .items-table th{
+    background:var(--muted-bg);
+    color:var(--muted);
+    font-weight:600;
+    text-align:left;
+  }
+  
+  .items-table td.num{
+    text-align:right;
+    font-family:'Poppins',sans-serif;
+  }
 
-  .summary{ margin-top:12px; width:100%; display:flex; justify-content:flex-end; gap:10px; flex-direction:column; max-width:420px }
-  .summary .line{ display:flex; justify-content:space-between; padding:6px 8px; font-size:14px }
-  .summary .total{ font-weight:700; font-size:18px; padding-top:6px }
+  .summary{
+    margin-top:28px;
+    width:100%;
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    flex-direction:column;
+    max-width:320px;
+    margin-left:auto;
+  }
+  
+  .summary .line{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    font-size:14px;
+    border-bottom:1px solid var(--border-light);
+  }
+  
+  .summary .total{
+    font-weight:700;
+    font-size:20px;
+    padding-top:12px;
+    border-bottom:none;
+    color:var(--accent);
+  }
 
-  .muted{ color:var(--muted) }
+  .muted{
+    color:var(--muted);
+  }
+  
+  .text-right{
+    text-align:right;
+  }
+  
+  .payment-preview{
+    margin-top:24px;
+    padding:16px;
+    background:var(--muted-bg);
+    border-radius:var(--radius-sm);
+    border-left:4px solid var(--accent);
+  }
+  
+  .payment-preview h4{
+    margin:0 0 12px;
+    font-size:16px;
+    color:var(--accent);
+  }
+  
+  .payment-details-preview{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  
+  .qr-preview{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  
+  .qr-preview canvas{
+    border-radius:8px;
+    background:#fff;
+    padding:8px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  .payment-info-preview{
+    font-size:13px;
+    line-height:1.5;
+  }
+  
+  .payment-info-preview strong{
+    color:var(--muted);
+  }
 
+  .notification{
+    position:fixed;
+    top:24px;
+    right:24px;
+    padding:14px 18px;
+    border-radius:var(--radius-sm);
+    background:var(--card-bg);
+    box-shadow:var(--shadow-lg);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    z-index:1000;
+    transform:translateX(150%);
+    transition:var(--transition);
+    border-left:4px solid var(--success);
+  }
+  
+  .notification.show{
+    transform:translateX(0);
+  }
+  
+  .notification.success{
+    border-left-color:var(--success);
+  }
+  
+  .notification.error{
+    border-left-color:var(--error);
+  }
+  
+  .notification .icon{
+    font-size:20px;
+  }
+
+  @media (max-width: 1200px){
+    .app-container{
+      grid-template-columns:1fr;
+      gap:20px;
+    }
+    
+    .invoice-preview{
+      position:static;
+      order:-1;
+    }
+    
+    .payment-details, .payment-details-preview{
+      grid-template-columns:1fr;
+    }
+  }
+  
+  @media (max-width: 768px){
+    .app-container{
+      padding:16px;
+    }
+    
+    .row{
+      flex-direction:column;
+      gap:16px;
+    }
+    
+    .card{
+      padding:20px;
+    }
+    
+    .invoice-card{
+      padding:24px;
+    }
+    
+    .meta-grid{
+      grid-template-columns:1fr;
+      gap:20px;
+    }
+    
+    .dates{
+      text-align:left;
+    }
+    
+    .dates .row{
+      justify-content:flex-start;
+    }
+  }
+  
   @media print{
-    body{background:#fff}
-    .app > *:not(.invoice-preview){ display:none }
-    .invoice-preview{ grid-column:1/-1 }
-    button,input,select,textarea{ display:none }
+    body{
+      background:#fff;
+      padding:0;
+      font-family:'Roboto Slab', serif !important;
+    }
+    
+    .app-container > *:not(.invoice-preview){
+      display:none;
+    }
+    
+    .invoice-preview{
+      grid-column:1/-1;
+      padding:0;
+      width:100%;
+      max-width:100%;
+    }
+    
+    .invoice-card{
+      box-shadow:none;
+      padding:20px;
+      min-height:auto;
+      font-family:'Roboto Slab', serif !important;
+    }
+    
+    button,input,select,textarea{
+      display:none;
+    }
+    
+    .payment-preview{
+      break-inside:avoid;
+    }
+    
+    .qr-preview canvas{
+      max-width:120px;
+    }
   }
 </style>
 </head>
 <body>
-  <div class="app">
+  <div class="app-container">
+
+    <!-- Notification area -->
+    <div id="notification" class="notification" aria-live="polite"></div>
 
     <!-- LEFT: controls -->
     <div class="card">
-      <h1>Invoice Generator</h1>
+      <div class="card-header">
+        <h1>Professional Invoice Generator</h1>
+      </div>
 
       <label>Company Logo (PNG / JPG) — will appear top-right (max 220×80)</label>
       <input id="logoUpload" type="file" accept="image/*" />
+      <div id="logoError" class="error"></div>
 
-      <label>Seller (From)</label>
+      <label>Seller (From) <span class="muted">*required</span></label>
       <textarea id="seller" rows="3" placeholder="Company name, address, email, phone">Acme Co.
 123 Business Road
 business@acme.example
 +1 555 0123</textarea>
+      <div id="sellerError" class="error"></div>
 
-      <label>Buyer (Bill To)</label>
+      <label>Buyer (Bill To) <span class="muted">*required</span></label>
       <textarea id="buyer" rows="3" placeholder="Client name, address, email">Client Ltd.
 45 Client Ave.
 client@example.com</textarea>
+      <div id="buyerError" class="error"></div>
 
       <div class="row" style="margin-top:10px">
         <div class="col">
-          <label>Invoice #</label>
+          <label>Invoice # <span class="muted">*required</span></label>
           <input id="invoiceNo" type="text" value="INV-1001" />
+          <div id="invoiceNoError" class="error"></div>
         </div>
         <div class="col">
           <label>Invoice Date</label>
@@ -133,6 +744,10 @@ client@example.com</textarea>
             <option value="$">USD ($)</option>
             <option value="€">EUR (€)</option>
             <option value="£">GBP (£)</option>
+            <option value="¥">JPY (¥)</option>
+            <option value="₹">INR (₹)</option>
+            <option value="₽">RUB (₽)</option>
+            <option value="₿">BTC (₿)</option>
           </select>
         </div>
         <div class="col">
@@ -144,44 +759,86 @@ client@example.com</textarea>
         </div>
         <div class="col">
           <label>Default VAT / Tax %</label>
-          <input id="taxPct" type="number" value="0" step="0.01" />
+          <input id="taxPct" type="number" value="0" step="0.01" min="0" max="100" />
         </div>
       </div>
 
-      <h3 style="margin-top:14px">Items</h3>
+      <h3>Items <span id="itemsCount" class="muted">(0 items)</span></h3>
       <table id="itemsTable" aria-label="items input table">
         <thead id="itemsInputHead">
           <!-- injected -->
         </thead>
         <tbody id="itemsBody"></tbody>
       </table>
-      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
+      <div id="itemsError" class="error"></div>
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap">
         <button id="addItem">+ Add item</button>
-        <button id="clearItems" class="ghost">Clear</button>
+        <button id="clearItems" class="ghost">Clear all</button>
+        <button id="duplicateLast" class="ghost">Duplicate last</button>
+        <button id="addTaxItem" class="ghost">Add tax item</button>
       </div>
 
-      <label style="margin-top:12px">Discount (flat)</label>
-      <input id="discount" type="number" value="0" step="0.01" />
+      <label style="margin-top:16px">Discount (flat)</label>
+      <input id="discount" type="number" value="0" step="0.01" min="0" />
 
-      <label style="margin-top:12px">Notes</label>
+      <label style="margin-top:16px">Notes</label>
       <textarea id="notes" rows="3" placeholder="Payment terms, bank details">Thank you for your business. Payment due within 14 days.</textarea>
 
-      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
-        <button id="updatePreview">Update Preview</button>
-        <button id="printBtn" class="ghost">Print</button>
-        <button id="downloadPDF">Download PDF</button>
-        <button id="saveJson" class="ghost">Save JSON</button>
-        <button id="loadJson" class="ghost">Load JSON</button>
+      <!-- Payment Details Section -->
+      <h3>Payment Details</h3>
+      <div class="payment-section">
+        <div class="payment-details">
+          <div class="payment-info">
+            <div class="payment-field">
+              <label>Bank Name</label>
+              <input id="bankName" type="text" placeholder="e.g. Bank of America" value="Global Bank Inc." />
+            </div>
+            <div class="payment-field">
+              <label>Account Holder</label>
+              <input id="accountHolder" type="text" placeholder="Account holder name" value="Acme Co." />
+            </div>
+            <div class="payment-field">
+              <label>Account Number</label>
+              <input id="accountNumber" type="text" placeholder="Account number" value="XXXX-XXXX-XXXX-1234" />
+            </div>
+            <div class="payment-field">
+              <label>Routing / SWIFT Code</label>
+              <input id="routingCode" type="text" placeholder="Routing or SWIFT code" value="ROUTING-123" />
+            </div>
+            <div class="payment-field">
+              <label>Payment Reference</label>
+              <input id="paymentReference" type="text" placeholder="Invoice number or custom reference" value="INV-1001" />
+            </div>
+            <div class="payment-field">
+              <label>QR Code Content</label>
+              <textarea id="qrContent" rows="2" placeholder="Custom QR code content (optional)"></textarea>
+              <div class="small">Leave empty for automatic generation</div>
+            </div>
+          </div>
+          <div class="qr-code-container">
+            <div id="qrCode"></div>
+            <div class="small">Scan to pay</div>
+          </div>
+        </div>
       </div>
 
       <!-- EU-only extra fields -->
-      <div id="euExtras" style="margin-top:12px; display:none">
+      <div id="euExtras" style="margin-top:16px; display:none">
         <label>Seller VAT number</label>
         <input id="sellerVAT" type="text" placeholder="VAT / Tax ID" />
         <label>Buyer VAT number</label>
         <input id="buyerVAT" type="text" placeholder="Client VAT ID" />
         <label>Bank details (IBAN / SWIFT)</label>
         <textarea id="bankDetails" rows="2" placeholder="IBAN, SWIFT, bank name"></textarea>
+      </div>
+
+      <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap; padding-top:16px; border-top:1px solid var(--border)">
+        <button id="updatePreview">Update Preview</button>
+        <button id="printBtn" class="ghost">Print</button>
+        <button id="downloadPDF">Download PDF</button>
+        <button id="saveJson" class="ghost">Save JSON</button>
+        <button id="loadJson" class="ghost">Load JSON</button>
+        <button id="resetForm" class="ghost">Reset</button>
       </div>
 
     </div>
@@ -201,374 +858,887 @@ client@example.com</textarea>
 
 <script>
 (function(){
-  // helpers
+  // ========== HELPERS ==========
   const $ = id => document.getElementById(id);
   const escapeHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const todayISO = (d=new Date()) => d.toISOString().slice(0,10);
+  
+  // Fixed date functions
+  const todayISO = () => {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  };
+  
   const addDaysISO = (days) => {
     const d = new Date();
     d.setDate(d.getDate() + days);
-    return d.toISOString().slice(0,10);
+    return d.toISOString().split('T')[0];
+  };
+  
+  // Format currency with proper localization
+  function formatCurrency(amount, currencySymbol) {
+    // Handle Bitcoin separately
+    if (currencySymbol === '₿') {
+      return '₿' + parseFloat(amount).toFixed(8);
+    }
+    
+    // Format with thousands separators
+    const formatted = parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return currencySymbol + formatted;
+  }
+
+  // Show notification
+  function showNotification(message, type = 'success') {
+    const notification = $('notification');
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+      <span class="icon">${type === 'success' ? '✓' : '⚠'}</span>
+      ${message}
+    `;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+      notification.classList.remove('show');
+    }, 3000);
+  }
+
+  // Generate QR Code with better error handling
+  function generateQRCode(text, containerId) {
+    const container = $(containerId);
+    container.innerHTML = '';
+    
+    if (!text || text.trim() === '') {
+      container.innerHTML = '<div class="small muted">Enter payment details</div>';
+      return;
+    }
+    
+    try {
+      // Use the qrcode-generator library properly
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      
+      const qrSize = 140;
+      const cellSize = qrSize / qr.getModuleCount();
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = qrSize;
+      canvas.height = qrSize;
+      const ctx = canvas.getContext('2d');
+      
+      // White background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, qrSize, qrSize);
+      
+      // Black modules with better anti-aliasing
+      ctx.fillStyle = '#000000';
+      for (let row = 0; row < qr.getModuleCount(); row++) {
+        for (let col = 0; col < qr.getModuleCount(); col++) {
+          if (qr.isDark(row, col)) {
+            ctx.fillRect(
+              Math.round(col * cellSize), 
+              Math.round(row * cellSize), 
+              Math.ceil(cellSize), 
+              Math.ceil(cellSize)
+            );
+          }
+        }
+      }
+      
+      container.appendChild(canvas);
+    } catch (e) {
+      console.error('QR generation failed:', e);
+      container.innerHTML = '<div class="small muted">QR Error: Content too long</div>';
+    }
+  }
+
+  // ========== STATE MANAGEMENT ==========
+  const AppState = {
+    logoDataUrl: '',
+    updateTimeout: null,
+    currentRegion: 'us',
+    taxItems: []
   };
 
-  // elements
-  const logoUpload = $('logoUpload');
-  const seller = $('seller');
-  const buyer = $('buyer');
-  const invoiceNo = $('invoiceNo');
-  const invoiceDate = $('invoiceDate');
-  const dueDate = $('dueDate');
-  const currency = $('currency');
-  const region = $('region');
-  const taxPct = $('taxPct');
-  const discount = $('discount');
-  const notes = $('notes');
-  const itemsInputHead = $('itemsInputHead');
-  const itemsBody = $('itemsBody');
-  const addItemBtn = $('addItem');
-  const clearItemsBtn = $('clearItems');
-  const updatePreviewBtn = $('updatePreview');
-  const printBtn = $('printBtn');
-  const downloadPDFBtn = $('downloadPDF');
-  const previewArea = $('previewArea');
-  const euExtras = $('euExtras');
-  const sellerVAT = $('sellerVAT');
-  const buyerVAT = $('buyerVAT');
-  const bankDetails = $('bankDetails');
-  const saveJsonBtn = $('saveJson');
-  const loadJsonBtn = $('loadJson');
+  // ========== DOM ELEMENTS ==========
+  const elements = {
+    logoUpload: $('logoUpload'),
+    seller: $('seller'),
+    buyer: $('buyer'),
+    invoiceNo: $('invoiceNo'),
+    invoiceDate: $('invoiceDate'),
+    dueDate: $('dueDate'),
+    currency: $('currency'),
+    region: $('region'),
+    taxPct: $('taxPct'),
+    discount: $('discount'),
+    notes: $('notes'),
+    itemsInputHead: $('itemsInputHead'),
+    itemsBody: $('itemsBody'),
+    itemsCount: $('itemsCount'),
+    addItemBtn: $('addItem'),
+    clearItemsBtn: $('clearItems'),
+    duplicateLastBtn: $('duplicateLast'),
+    addTaxItemBtn: $('addTaxItem'),
+    updatePreviewBtn: $('updatePreview'),
+    printBtn: $('printBtn'),
+    downloadPDFBtn: $('downloadPDF'),
+    previewArea: $('previewArea'),
+    euExtras: $('euExtras'),
+    sellerVAT: $('sellerVAT'),
+    buyerVAT: $('buyerVAT'),
+    bankDetails: $('bankDetails'),
+    saveJsonBtn: $('saveJson'),
+    loadJsonBtn: $('loadJson'),
+    resetFormBtn: $('resetForm'),
+    qrContent: $('qrContent'),
+    // Payment details
+    bankName: $('bankName'),
+    accountHolder: $('accountHolder'),
+    accountNumber: $('accountNumber'),
+    routingCode: $('routingCode'),
+    paymentReference: $('paymentReference')
+  };
 
-  // state
-  let logoDataUrl = '';
-
-  // init dates
-  invoiceDate.value = todayISO();
-  dueDate.value = addDaysISO(14);
-
-  // logo upload
-  logoUpload.addEventListener('change', e=>{
-    const file = e.target.files && e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      logoDataUrl = reader.result;
-      updatePreview();
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // render items input header based on region
-  function renderItemsInputHead(){
-    if(region.value === 'eu'){
-      itemsInputHead.innerHTML = `<tr>
-        <th style="width:40%">Description</th>
-        <th style="width:10%">Qty</th>
-        <th style="width:15%">Unit price</th>
-        <th style="width:10%">VAT %</th>
-        <th style="width:15%">Line net</th>
-        <th style="width:10%"></th>
-      </tr>`;
-    } else {
-      itemsInputHead.innerHTML = `<tr>
-        <th style="width:60%">Description</th>
-        <th style="width:10%">Qty</th>
-        <th style="width:15%">Unit price</th>
-        <th style="width:10%"></th>
-      </tr>`;
-    }
-  }
-
-  // create row - when region changes we'll rebuild rows from data so row format matches region
-  function createRow(desc='Service / Product', qty=1, price=0, vat= (region.value === 'eu' ? parseFloat(taxPct.value || 0) : 0)){
-    const st = region.value;
-    const tr = document.createElement('tr');
-    if(st === 'eu'){
-      tr.innerHTML = `
-        <td><input class="desc" type="text" value="${escapeHtml(desc)}" /></td>
-        <td><input class="qty" type="number" min="0" step="0.01" value="${qty}" /></td>
-        <td><input class="price" type="number" min="0" step="0.01" value="${price}" /></td>
-        <td><input class="vat" type="number" min="0" step="0.01" value="${vat}" /></td>
-        <td class="line-net small">${(qty*price).toFixed(2)}</td>
-        <td class="text-right"><button class="remove ghost" type="button">Remove</button></td>
-      `;
-    } else {
-      tr.innerHTML = `
-        <td><input class="desc" type="text" value="${escapeHtml(desc)}" /></td>
-        <td><input class="qty" type="number" min="0" step="0.01" value="${qty}" /></td>
-        <td><input class="price" type="number" min="0" step="0.01" value="${price}" /></td>
-        <td class="text-right"><button class="remove ghost" type="button">Remove</button></td>
-      `;
-    }
-
-    // attach events
-    tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updatePreview));
-    const rem = tr.querySelector('.remove');
-    if(rem) rem.addEventListener('click', ()=>{ tr.remove(); updatePreview(); });
-    itemsBody.appendChild(tr);
+  // ========== INITIALIZATION ==========
+  function initApp() {
+    // Set default dates
+    elements.invoiceDate.value = todayISO();
+    elements.dueDate.value = addDaysISO(14);
+    
+    // Set initial region
+    AppState.currentRegion = elements.region.value;
+    
+    // Render UI
+    renderItemsInputHead();
+    createRow('Consulting services', 2, 150, parseFloat(elements.taxPct.value||0));
     updatePreview();
+    updateQRCode();
+    
+    // Bind events
+    bindEvents();
   }
 
-  // collect items from inputs and calculate lines
-  function collectItems(){
-    const rows = Array.from(itemsBody.querySelectorAll('tr'));
-    const st = region.value;
-    const items = rows.map(r => {
-      const desc = r.querySelector('.desc') ? r.querySelector('.desc').value : '';
-      const qty = r.querySelector('.qty') ? parseFloat(r.querySelector('.qty').value) || 0 : 0;
-      const price = r.querySelector('.price') ? parseFloat(r.querySelector('.price').value) || 0 : 0;
-      if(st === 'eu'){
-        const vatPct = r.querySelector('.vat') ? parseFloat(r.querySelector('.vat').value) || 0 : (parseFloat(taxPct.value)||0);
-        const net = qty * price;
-        const vat = net * vatPct / 100;
-        const gross = net + vat;
-        return {desc, qty, price, vatPct, net, vat, gross};
-      } else {
-        const line = qty * price;
-        return {desc, qty, price, line};
+  // ========== EVENT BINDING ==========
+  function bindEvents() {
+    // Logo upload
+    elements.logoUpload.addEventListener('change', handleLogoUpload);
+    
+    // Item management
+    elements.addItemBtn.addEventListener('click', () => {
+      createRow('New item', 1, 0);
+      showNotification('New item added', 'success');
+    });
+    
+    elements.clearItemsBtn.addEventListener('click', () => {
+      if (elements.itemsBody.querySelectorAll('tr').length > 0 && confirm('Are you sure you want to clear all items?')) {
+        elements.itemsBody.innerHTML = '';
+        createRow('Consulting services', 1, 150);
+        updateItemsCount();
+        updatePreview();
+        showNotification('All items cleared', 'success');
       }
     });
+    
+    elements.duplicateLastBtn.addEventListener('click', duplicateLastItem);
+    elements.addTaxItemBtn.addEventListener('click', addTaxItem);
+    elements.resetFormBtn.addEventListener('click', resetForm);
+    
+    // Main actions
+    elements.updatePreviewBtn.addEventListener('click', updatePreview);
+    elements.printBtn.addEventListener('click', handlePrint);
+    elements.downloadPDFBtn.addEventListener('click', exportPDF);
+    elements.saveJsonBtn.addEventListener('click', saveJSON);
+    elements.loadJsonBtn.addEventListener('click', handleLoadJSON);
+    
+    // Auto-update on input changes
+    const autoUpdateElements = [
+      elements.seller, elements.buyer, elements.invoiceNo, elements.invoiceDate, 
+      elements.dueDate, elements.currency, elements.region, elements.taxPct, 
+      elements.discount, elements.notes, elements.sellerVAT, elements.buyerVAT, 
+      elements.bankDetails, elements.bankName, elements.accountHolder, 
+      elements.accountNumber, elements.routingCode, elements.paymentReference,
+      elements.qrContent
+    ];
+    
+    autoUpdateElements.forEach(el => {
+      el.addEventListener('input', () => {
+        if (el === elements.region) {
+          handleRegionChange();
+        }
+        schedulePreviewUpdate();
+      });
+    });
+  }
+
+  // ========== CORE FUNCTIONS ==========
+  
+  // Handle logo upload with validation
+  function handleLogoUpload(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.match('image.*')) {
+      $('logoError').textContent = 'Please select an image file (PNG, JPG, etc.)';
+      $('logoError').style.display = 'block';
+      return;
+    }
+    
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      $('logoError').textContent = 'Image size should be less than 2MB';
+      $('logoError').style.display = 'block';
+      return;
+    }
+    
+    $('logoError').style.display = 'none';
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      AppState.logoDataUrl = reader.result;
+      // Validate image dimensions
+      const img = new Image();
+      img.onload = function() {
+        if (this.width > 220 || this.height > 80) {
+          showNotification('Logo exceeds recommended dimensions (220×80px). It will be scaled down.', 'error');
+        }
+        updatePreview();
+      };
+      img.src = reader.result;
+    };
+    reader.onerror = () => {
+      $('logoError').textContent = 'Error reading file';
+      $('logoError').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Handle region change
+  function handleRegionChange() {
+    const newRegion = elements.region.value;
+    
+    if (newRegion !== AppState.currentRegion) {
+      AppState.currentRegion = newRegion;
+      
+      // Rebuild items table for new region
+      const currentItems = collectItems();
+      elements.itemsBody.innerHTML = '';
+      
+      currentItems.forEach(item => {
+        if (newRegion === 'eu') {
+          createRow(item.desc || '', item.qty || 1, item.price || 0, item.vatPct || parseFloat(elements.taxPct.value || 0));
+        } else {
+          createRow(item.desc || '', item.qty || 1, item.price || 0, 0);
+        }
+      });
+      
+      // Show/hide EU extras
+      elements.euExtras.style.display = newRegion === 'eu' ? 'block' : 'none';
+      
+      renderItemsInputHead();
+      updatePreview();
+    }
+  }
+
+  // Render items input header based on region
+  function renderItemsInputHead() {
+    const isEU = elements.region.value === 'eu';
+    
+    if (isEU) {
+      elements.itemsInputHead.innerHTML = `
+        <tr>
+          <th style="width:40%">Description</th>
+          <th style="width:12%">Qty</th>
+          <th style="width:15%">Unit Price</th>
+          <th style="width:15%">VAT %</th>
+          <th style="width:18%">Amount</th>
+        </tr>
+      `;
+    } else {
+      elements.itemsInputHead.innerHTML = `
+        <tr>
+          <th style="width:50%">Description</th>
+          <th style="width:15%">Qty</th>
+          <th style="width:20%">Unit Price</th>
+          <th style="width:15%">Amount</th>
+        </tr>
+      `;
+    }
+  }
+
+  // Create new item row
+  function createRow(desc = '', qty = 1, price = 0, vatPct = 0) {
+    const isEU = elements.region.value === 'eu';
+    const row = document.createElement('tr');
+    
+    if (isEU) {
+      row.innerHTML = `
+        <td><input type="text" class="item-desc" value="${escapeHtml(desc)}" placeholder="Item description" /></td>
+        <td><input type="number" class="item-qty" value="${qty}" min="0" step="0.01" /></td>
+        <td><input type="number" class="item-price" value="${price}" min="0" step="0.01" /></td>
+        <td><input type="number" class="item-vat" value="${vatPct}" min="0" max="100" step="0.01" /></td>
+        <td>
+          <div class="item-amount" style="padding:8px 4px">${formatCurrency(qty * price, elements.currency.value)}</div>
+          <div class="actions">
+            <button class="ghost" onclick="removeRow(this)" style="padding:4px 8px;font-size:11px">✕</button>
+          </div>
+        </td>
+      `;
+    } else {
+      row.innerHTML = `
+        <td><input type="text" class="item-desc" value="${escapeHtml(desc)}" placeholder="Item description" /></td>
+        <td><input type="number" class="item-qty" value="${qty}" min="0" step="0.01" /></td>
+        <td><input type="number" class="item-price" value="${price}" min="0" step="0.01" /></td>
+        <td>
+          <div class="item-amount" style="padding:8px 4px">${formatCurrency(qty * price, elements.currency.value)}</div>
+          <div class="actions">
+            <button class="ghost" onclick="removeRow(this)" style="padding:4px 8px;font-size:11px">✕</button>
+          </div>
+        </td>
+      `;
+    }
+    
+    // Add event listeners for auto-calculation
+    const inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('input', () => {
+        calculateRow(row);
+        schedulePreviewUpdate();
+      });
+    });
+    
+    elements.itemsBody.appendChild(row);
+    updateItemsCount();
+    return row;
+  }
+
+  // Calculate row amount
+  function calculateRow(row) {
+    const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    const amountCell = row.querySelector('.item-amount');
+    
+    if (amountCell) {
+      amountCell.textContent = formatCurrency(qty * price, elements.currency.value);
+    }
+  }
+
+  // Remove row
+  function removeRow(button) {
+    const row = button.closest('tr');
+    row.remove();
+    updateItemsCount();
+    updatePreview();
+    showNotification('Item removed', 'success');
+  }
+
+  // Duplicate last item
+  function duplicateLastItem() {
+    const rows = elements.itemsBody.querySelectorAll('tr');
+    if (rows.length === 0) return;
+    
+    const lastRow = rows[rows.length - 1];
+    const desc = lastRow.querySelector('.item-desc').value;
+    const qty = lastRow.querySelector('.item-qty').value;
+    const price = lastRow.querySelector('.item-price').value;
+    const vatPct = lastRow.querySelector('.item-vat') ? lastRow.querySelector('.item-vat').value : 0;
+    
+    createRow(desc, qty, price, vatPct);
+    showNotification('Last item duplicated', 'success');
+  }
+
+  // Add tax item
+  function addTaxItem() {
+    const items = collectItems();
+    if (items.length === 0) {
+      showNotification('Add some items first', 'error');
+      return;
+    }
+    
+    const subtotal = calculateSubtotal(items);
+    const taxPct = parseFloat(elements.taxPct.value) || 0;
+    const taxAmount = subtotal * taxPct / 100;
+    
+    if (taxAmount > 0) {
+      createRow(`Tax (${taxPct}%)`, 1, taxAmount, 0);
+      showNotification('Tax item added', 'success');
+    } else {
+      showNotification('Set tax percentage first', 'error');
+    }
+  }
+
+  // Collect all items from table
+  function collectItems() {
+    const rows = elements.itemsBody.querySelectorAll('tr');
+    const items = [];
+    
+    rows.forEach(row => {
+      const desc = row.querySelector('.item-desc').value;
+      const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+      const price = parseFloat(row.querySelector('.item-price').value) || 0;
+      const vatInput = row.querySelector('.item-vat');
+      const vatPct = vatInput ? parseFloat(vatInput.value) || 0 : 0;
+      
+      if (desc && (qty > 0 || price > 0)) {
+        items.push({
+          desc: desc,
+          qty: qty,
+          price: price,
+          vatPct: vatPct,
+          amount: qty * price
+        });
+      }
+    });
+    
     return items;
   }
 
-  // update preview rendering
-  function updatePreview(){
-    renderItemsInputHead(); // ensure head matches region
-    euExtras.style.display = region.value === 'eu' ? 'block' : 'none';
+  // Calculate subtotal
+  function calculateSubtotal(items) {
+    return items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+  }
 
-    const items = collectItems();
-    const c = currency.value || '$';
-    const disc = parseFloat(discount.value) || 0;
-
-    // compute numbers
-    if(region.value === 'eu'){
-      const net = items.reduce((s,i)=> s + (i.net || 0), 0);
-      const vatTotal = items.reduce((s,i)=> s + (i.vat || 0), 0);
-      const gross = items.reduce((s,i)=> s + (i.gross || 0), 0);
-      renderPreviewEU({net, vatTotal, gross, items, disc, c});
+  // Calculate tax amount
+  function calculateTax(items, discount = 0) {
+    const isEU = elements.region.value === 'eu';
+    
+    if (isEU) {
+      // EU: Calculate VAT per item
+      return items.reduce((sum, item) => {
+        const itemAmount = item.qty * item.price;
+        return sum + (itemAmount * (item.vatPct || 0) / 100);
+      }, 0);
     } else {
-      const subtotal = items.reduce((s,i)=> s + (i.line || 0), 0);
-      const tax = subtotal * (parseFloat(taxPct.value || 0) / 100);
-      const total = subtotal + tax - disc;
-      renderPreviewUS({subtotal, tax, total, items, disc, c});
+      // US: Apply tax percentage to subtotal minus discount
+      const subtotal = calculateSubtotal(items);
+      const taxableAmount = Math.max(0, subtotal - discount);
+      const taxPct = parseFloat(elements.taxPct.value) || 0;
+      return taxableAmount * taxPct / 100;
     }
   }
 
-  // render preview US style
-  function renderPreviewUS({subtotal, tax, total, items, disc, c}){
-    const sHTML = `
-      <div class="invoice-head">
-        <div class="invoice-title"><strong>INVOICE</strong><div class="small">Invoice # ${escapeHtml(invoiceNo.value || '')}</div></div>
-        <div>${logoDataUrl ? `<img class="logo-img" src="${logoDataUrl}" alt="Logo" />` : ''}</div>
-      </div>
-
-      <div class="meta-grid">
-        <div class="from-to">
-          <div><strong>From</strong></div>
-          <div class="small">${escapeHtml(seller.value).replace(/\n/g,'<br/>')}</div>
-        </div>
-        <div class="dates">
-          <div class="row"><div class="item small">Date</div><div class="item">${escapeHtml(invoiceDate.value || '')}</div></div>
-          <div class="row"><div class="item small">Due</div><div class="item">${escapeHtml(dueDate.value || '')}</div></div>
-          <div style="margin-top:8px"><strong>Bill To</strong></div>
-          <div class="small" style="margin-top:4px">${escapeHtml(buyer.value).replace(/\n/g,'<br/>')}</div>
-        </div>
-      </div>
-
-      <table class="items-table" aria-label="invoice items">
-        <thead><tr><th>Description</th><th style="width:80px">Qty</th><th style="width:120px">Unit</th><th style="width:120px">Total</th></tr></thead>
-        <tbody>
-          ${items.map(i => `<tr>
-              <td>${escapeHtml(i.desc)}</td>
-              <td class="num">${(i.qty).toFixed(2).replace(/\.00$/,'')}</td>
-              <td class="num">${c}${(i.price).toFixed(2)}</td>
-              <td class="num">${c}${(i.line).toFixed(2)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-
-      <div class="summary">
-        <div class="line"><div class="small">Subtotal</div><div>${c}${subtotal.toFixed(2)}</div></div>
-        <div class="line"><div class="small">Tax (${parseFloat(taxPct.value || 0).toFixed(2)}%)</div><div>${c}${tax.toFixed(2)}</div></div>
-        <div class="line"><div class="small">Discount</div><div>-${c}${disc.toFixed(2)}</div></div>
-        <div class="line total"><div class="small">Total</div><div>${c}${total.toFixed(2)}</div></div>
-      </div>
-
-      <div style="margin-top:12px"><strong>Notes</strong><div class="small">${escapeHtml(notes.value).replace(/\n/g,'<br/>')}</div></div>
-    `;
-    previewArea.innerHTML = sHTML;
+  // Update items count display
+  function updateItemsCount() {
+    const count = elements.itemsBody.querySelectorAll('tr').length;
+    elements.itemsCount.textContent = `(${count} item${count !== 1 ? 's' : ''})`;
   }
 
-  // render preview EU style
-  function renderPreviewEU({net, vatTotal, gross, items, disc, c}){
-    const sellerVatHtml = sellerVAT.value ? `<div class="small"><strong>Seller VAT:</strong> ${escapeHtml(sellerVAT.value)}</div>` : '';
-    const buyerVatHtml = buyerVAT.value ? `<div class="small"><strong>Buyer VAT:</strong> ${escapeHtml(buyerVAT.value)}</div>` : '';
-    const bankHtml = bankDetails.value ? `<div style="margin-top:8px" class="small"><strong>Bank:</strong><br>${escapeHtml(bankDetails.value).replace(/\n/g,'<br/>')}</div>` : '';
-
-    const sHTML = `
-      <div class="invoice-head">
-        <div class="invoice-title"><strong>INVOICE</strong><div class="small">Invoice # ${escapeHtml(invoiceNo.value || '')}</div></div>
-        <div>${logoDataUrl ? `<img class="logo-img" src="${logoDataUrl}" alt="Logo" />` : ''}</div>
-      </div>
-
-      <div class="meta-grid">
-        <div class="from-to">
-          <div><strong>From</strong></div>
-          <div class="small">${escapeHtml(seller.value).replace(/\n/g,'<br/>')}</div>
-          ${sellerVatHtml}
-        </div>
-        <div class="dates">
-          <div class="row"><div class="item small">Date</div><div class="item">${escapeHtml(invoiceDate.value || '')}</div></div>
-          <div class="row"><div class="item small">Due</div><div class="item">${escapeHtml(dueDate.value || '')}</div></div>
-          <div style="margin-top:8px"><strong>Bill To</strong></div>
-          <div class="small" style="margin-top:4px">${escapeHtml(buyer.value).replace(/\n/g,'<br/>')}</div>
-          ${buyerVatHtml}
-          ${bankHtml}
-        </div>
-      </div>
-
-      <table class="items-table" aria-label="invoice items">
-        <thead><tr><th>Description</th><th style="width:70px">Qty</th><th style="width:120px">Unit</th><th style="width:120px">Net</th><th style="width:80px">VAT %</th><th style="width:120px">VAT</th><th style="width:120px">Gross</th></tr></thead>
-        <tbody>
-          ${items.map(i => `<tr>
-              <td>${escapeHtml(i.desc)}</td>
-              <td class="num">${(i.qty).toFixed(2).replace(/\.00$/,'')}</td>
-              <td class="num">${c}${(i.price).toFixed(2)}</td>
-              <td class="num">${c}${(i.net).toFixed(2)}</td>
-              <td class="num">${(i.vatPct).toFixed(2)}%</td>
-              <td class="num">${c}${(i.vat).toFixed(2)}</td>
-              <td class="num">${c}${(i.gross).toFixed(2)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-
-      <div class="summary">
-        <div class="line"><div class="small">Net</div><div>${c}${net.toFixed(2)}</div></div>
-        <div class="line"><div class="small">VAT</div><div>${c}${vatTotal.toFixed(2)}</div></div>
-        <div class="line"><div class="small">Discount</div><div>-${c}${disc.toFixed(2)}</div></div>
-        <div class="line total"><div class="small">Total</div><div>${c}${(gross - disc).toFixed(2)}</div></div>
-      </div>
-
-      <div style="margin-top:12px"><strong>Notes</strong><div class="small">${escapeHtml(notes.value).replace(/\n/g,'<br/>')}</div></div>
-    `;
-    previewArea.innerHTML = sHTML;
+  // Schedule preview update (debounced)
+  function schedulePreviewUpdate() {
+    clearTimeout(AppState.updateTimeout);
+    AppState.updateTimeout = setTimeout(updatePreview, 300);
   }
 
-  // PDF generator that fits to A4 single page (scale down if needed)
-  async function exportPDF(){
-    updatePreview();
-    const el = previewArea;
-    // give a short time for images (logo) to be ready
-    await new Promise(res => setTimeout(res, 120));
-    const canvas = await html2canvas(el, {scale:2, useCORS:true, allowTaint:true});
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p','pt','a4');
-    const pdfW = pdf.internal.pageSize.getWidth();
-    const pdfH = pdf.internal.pageSize.getHeight();
-    // scale to fit A4 while preserving aspect ratio
-    const ratio = Math.min(pdfW / canvas.width, pdfH / canvas.height);
-    const imgW = canvas.width * ratio;
-    const imgH = canvas.height * ratio;
-    pdf.addImage(imgData, 'PNG', (pdfW - imgW) / 2, 20, imgW, imgH);
-    const fname = (invoiceNo.value ? invoiceNo.value.trim() : 'invoice') + '.pdf';
-    pdf.save(fname);
-  }
-
-  // Save / Load JSON (simple)
-  function saveJSON(){
-    const data = {
-      seller: seller.value, buyer: buyer.value,
-      invoiceNo: invoiceNo.value, invoiceDate: invoiceDate.value, dueDate: dueDate.value,
-      currency: currency.value, region: region.value, taxPct: taxPct.value, discount: discount.value,
-      notes: notes.value, sellerVAT: sellerVAT.value, buyerVAT: buyerVAT.value, bankDetails: bankDetails.value,
-      logoDataUrl,
-      items: collectItems()
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (invoiceNo.value || 'invoice') + '.invoice.json';
-    a.click();
-  }
-
-  function loadJSONFromFile(file){
-    if(!file) return;
-    const r = new FileReader();
-    r.onload = e => {
-      try{
-        const obj = JSON.parse(e.target.result);
-        seller.value = obj.seller || '';
-        buyer.value = obj.buyer || '';
-        invoiceNo.value = obj.invoiceNo || '';
-        invoiceDate.value = obj.invoiceDate || todayISO();
-        dueDate.value = obj.dueDate || addDaysISO(14);
-        currency.value = obj.currency || '$';
-        region.value = obj.region || 'us';
-        taxPct.value = obj.taxPct || 0;
-        discount.value = obj.discount || 0;
-        notes.value = obj.notes || '';
-        sellerVAT.value = obj.sellerVAT || '';
-        buyerVAT.value = obj.buyerVAT || '';
-        bankDetails.value = obj.bankDetails || '';
-        logoDataUrl = obj.logoDataUrl || '';
-        // rebuild items for current region
-        itemsBody.innerHTML = '';
-        const items = obj.items || [];
-        items.forEach(it => {
-          if(region.value === 'eu'){
-            createRow(it.desc || '', it.qty || 1, it.price || 0, it.vatPct || (parseFloat(taxPct.value)||0));
-          } else {
-            createRow(it.desc || '', it.qty || 1, it.price || 0, 0);
-          }
-        });
-        updatePreview();
-      } catch(err){
-        alert('Invalid JSON file');
+  // Update QR code
+  function updateQRCode() {
+    let qrText = elements.qrContent.value.trim();
+    
+    if (!qrText) {
+      // Auto-generate QR content
+      const bankName = elements.bankName.value || '';
+      const accountHolder = elements.accountHolder.value || '';
+      const accountNumber = elements.accountNumber.value || '';
+      const routingCode = elements.routingCode.value || '';
+      const reference = elements.paymentReference.value || elements.invoiceNo.value || '';
+      const amount = calculateTotal();
+      
+      qrText = `Bank: ${bankName}\nAccount: ${accountHolder}\nIBAN/Acc#: ${accountNumber}\nReference: ${reference}\nAmount: ${formatCurrency(amount, elements.currency.value)}`;
+      
+      if (routingCode) {
+        qrText += `\nRouting/SWIFT: ${routingCode}`;
       }
-    };
-    r.readAsText(file);
+    }
+    
+    generateQRCode(qrText, 'qrCode');
   }
 
-  // event bindings
-  addItemBtn.addEventListener('click', ()=> createRow('New item',1,0));
-  clearItemsBtn.addEventListener('click', ()=> { itemsBody.innerHTML=''; createRow('Service / Product',1,0); updatePreview(); });
-  updatePreviewBtn.addEventListener('click', updatePreview);
-  printBtn.addEventListener('click', ()=>{ updatePreview(); window.print(); });
-  downloadPDFBtn.addEventListener('click', exportPDF);
-  saveJsonBtn.addEventListener('click', saveJSON);
-  loadJsonBtn.addEventListener('click', ()=>{
-    const input = document.createElement('input'); input.type='file'; input.accept='application/json';
-    input.onchange = e => {
-      const f = e.target.files[0];
-      if(f) loadJSONFromFile(f);
-    };
-    input.click();
-  });
+  // Calculate total amount
+  function calculateTotal() {
+    const items = collectItems();
+    const subtotal = calculateSubtotal(items);
+    const discount = parseFloat(elements.discount.value) || 0;
+    const taxAmount = calculateTax(items, discount);
+    
+    return Math.max(0, subtotal - discount + taxAmount);
+  }
 
-  // auto-update on input changes
-  [seller,buyer,invoiceNo,invoiceDate,dueDate,currency,region,taxPct,discount,notes,sellerVAT,buyerVAT,bankDetails].forEach(el=>{
-    el.addEventListener('input', ()=> {
-      if(el === region){
-        // rebuild items to match new region columns
-        const currentItems = collectItems();
-        const saved = currentItems.map(it => ({...it}));
-        itemsBody.innerHTML = '';
-        saved.forEach(it => {
-          if(region.value === 'eu') createRow(it.desc || '', it.qty || 1, it.price || 0, it.vatPct || parseFloat(taxPct.value || 0));
-          else createRow(it.desc || '', it.qty || 1, it.price || 0, 0);
-        });
+  // Update preview
+  function updatePreview() {
+    const items = collectItems();
+    const subtotal = calculateSubtotal(items);
+    const discount = parseFloat(elements.discount.value) || 0;
+    const taxAmount = calculateTax(items, discount);
+    const total = Math.max(0, subtotal - discount + taxAmount);
+    const isEU = elements.region.value === 'eu';
+    
+    // Format dates properly
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+    
+    // Build items HTML
+    let itemsHTML = '';
+    items.forEach(item => {
+      const amount = item.qty * item.price;
+      if (isEU) {
+        itemsHTML += `
+          <tr>
+            <td>${escapeHtml(item.desc)}</td>
+            <td class="num">${item.qty}</td>
+            <td class="num">${formatCurrency(item.price, elements.currency.value)}</td>
+            <td class="num">${item.vatPct}%</td>
+            <td class="num">${formatCurrency(amount, elements.currency.value)}</td>
+          </tr>
+        `;
+      } else {
+        itemsHTML += `
+          <tr>
+            <td>${escapeHtml(item.desc)}</td>
+            <td class="num">${item.qty}</td>
+            <td class="num">${formatCurrency(item.price, elements.currency.value)}</td>
+            <td class="num">${formatCurrency(amount, elements.currency.value)}</td>
+          </tr>
+        `;
       }
-      updatePreview();
     });
-  });
+    
+    // Build summary HTML
+    let summaryHTML = '';
+    if (subtotal > 0) {
+      summaryHTML += `<div class="line"><span>Subtotal</span><span>${formatCurrency(subtotal, elements.currency.value)}</span></div>`;
+    }
+    
+    if (discount > 0) {
+      summaryHTML += `<div class="line"><span>Discount</span><span>-${formatCurrency(discount, elements.currency.value)}</span></div>`;
+    }
+    
+    if (taxAmount > 0) {
+      const taxLabel = isEU ? 'VAT' : 'Tax';
+      summaryHTML += `<div class="line"><span>${taxLabel}</span><span>${formatCurrency(taxAmount, elements.currency.value)}</span></div>`;
+    }
+    
+    summaryHTML += `<div class="line total"><span>TOTAL</span><span>${formatCurrency(total, elements.currency.value)}</span></div>`;
+    
+    // Build payment details preview
+    const bankName = elements.bankName.value || '';
+    const accountHolder = elements.accountHolder.value || '';
+    const accountNumber = elements.accountNumber.value || '';
+    const routingCode = elements.routingCode.value || '';
+    const paymentReference = elements.paymentReference.value || elements.invoiceNo.value || '';
+    
+    let paymentDetailsHTML = '';
+    if (bankName || accountHolder || accountNumber) {
+      paymentDetailsHTML = `
+        <div class="payment-preview">
+          <h4>Payment Details</h4>
+          <div class="payment-details-preview">
+            <div class="payment-info-preview">
+              ${bankName ? `<div><strong>Bank:</strong> ${escapeHtml(bankName)}</div>` : ''}
+              ${accountHolder ? `<div><strong>Account Holder:</strong> ${escapeHtml(accountHolder)}</div>` : ''}
+              ${accountNumber ? `<div><strong>Account Number:</strong> ${escapeHtml(accountNumber)}</div>` : ''}
+              ${routingCode ? `<div><strong>Routing/SWIFT:</strong> ${escapeHtml(routingCode)}</div>` : ''}
+              ${paymentReference ? `<div><strong>Reference:</strong> ${escapeHtml(paymentReference)}</div>` : ''}
+            </div>
+            <div class="qr-preview" id="qrPreview"></div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Generate QR code for preview
+    setTimeout(() => {
+      let qrText = elements.qrContent.value.trim();
+      
+      if (!qrText) {
+        qrText = `Bank: ${bankName}\nAccount: ${accountHolder}\nIBAN/Acc#: ${accountNumber}\nReference: ${paymentReference}\nAmount: ${formatCurrency(total, elements.currency.value)}`;
+        
+        if (routingCode) {
+          qrText += `\nRouting/SWIFT: ${routingCode}`;
+        }
+      }
+      
+      generateQRCode(qrText, 'qrPreview');
+    }, 100);
+    
+    // Build the final preview HTML
+    const tableHeaders = isEU ? 
+      `<tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>VAT %</th><th>Amount</th></tr>` :
+      `<tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>`;
+    
+    elements.previewArea.innerHTML = `
+      <div class="invoice-head">
+        <div>
+          <div class="invoice-title">INVOICE</div>
+          <div class="small muted">Thank you for your business</div>
+        </div>
+        ${AppState.logoDataUrl ? `<img src="${AppState.logoDataUrl}" class="logo-img" alt="Company Logo" />` : ''}
+      </div>
+      
+      <div class="meta-grid">
+        <div class="from-to">
+          <div><strong>From:</strong></div>
+          <div style="white-space:pre-line;margin-top:6px">${escapeHtml(elements.seller.value)}</div>
+          ${isEU && elements.sellerVAT.value ? `<div style="margin-top:6px"><strong>VAT:</strong> ${escapeHtml(elements.sellerVAT.value)}</div>` : ''}
+          
+          <div style="margin-top:16px"><strong>To:</strong></div>
+          <div style="white-space:pre-line;margin-top:6px">${escapeHtml(elements.buyer.value)}</div>
+          ${isEU && elements.buyerVAT.value ? `<div style="margin-top:6px"><strong>VAT:</strong> ${escapeHtml(elements.buyerVAT.value)}</div>` : ''}
+        </div>
+        
+        <div class="dates">
+          <div class="row">
+            <div class="item"><strong>Invoice #</strong></div>
+            <div class="item">${escapeHtml(elements.invoiceNo.value)}</div>
+          </div>
+          <div class="row">
+            <div class="item"><strong>Invoice Date</strong></div>
+            <div class="item">${formatDate(elements.invoiceDate.value)}</div>
+          </div>
+          <div class="row">
+            <div class="item"><strong>Due Date</strong></div>
+            <div class="item">${formatDate(elements.dueDate.value)}</div>
+          </div>
+        </div>
+      </div>
+      
+      <table class="items-table">
+        <thead>${tableHeaders}</thead>
+        <tbody>${itemsHTML}</tbody>
+      </table>
+      
+      <div class="summary">
+        ${summaryHTML}
+      </div>
+      
+      ${elements.notes.value ? `
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border-light)">
+          <div><strong>Notes:</strong></div>
+          <div style="white-space:pre-line;margin-top:8px">${escapeHtml(elements.notes.value)}</div>
+        </div>
+      ` : ''}
+      
+      ${paymentDetailsHTML}
+    `;
+    
+    // Update QR code in payment section
+    updateQRCode();
+  }
 
-  // init UI
-  renderItemsInputHead();
-  // initial one sample row
-  createRow('Consulting services', 2, 150, parseFloat(taxPct.value||0));
-  updatePreview();
+  // ========== EXPORT FUNCTIONS ==========
+  
+  // Handle print
+  function handlePrint() {
+    window.print();
+  }
+  
+  // Export PDF
+  async function exportPDF() {
+    try {
+      elements.downloadPDFBtn.disabled = true;
+      elements.downloadPDFBtn.textContent = 'Generating PDF...';
+      elements.downloadPDFBtn.classList.add('loading');
+      
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const element = elements.previewArea;
+      
+      // Use html2canvas to capture the preview
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      // Add new pages if content is too long
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`invoice-${elements.invoiceNo.value || 'document'}.pdf`);
+      showNotification('PDF downloaded successfully', 'success');
+      
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      showNotification('PDF export failed. Please try again.', 'error');
+    } finally {
+      elements.downloadPDFBtn.disabled = false;
+      elements.downloadPDFBtn.textContent = 'Download PDF';
+      elements.downloadPDFBtn.classList.remove('loading');
+    }
+  }
+  
+  // Save JSON
+  function saveJSON() {
+    const data = {
+      seller: elements.seller.value,
+      buyer: elements.buyer.value,
+      invoiceNo: elements.invoiceNo.value,
+      invoiceDate: elements.invoiceDate.value,
+      dueDate: elements.dueDate.value,
+      currency: elements.currency.value,
+      region: elements.region.value,
+      taxPct: elements.taxPct.value,
+      discount: elements.discount.value,
+      notes: elements.notes.value,
+      sellerVAT: elements.sellerVAT.value,
+      buyerVAT: elements.buyerVAT.value,
+      bankDetails: elements.bankDetails.value,
+      items: collectItems(),
+      paymentDetails: {
+        bankName: elements.bankName.value,
+        accountHolder: elements.accountHolder.value,
+        accountNumber: elements.accountNumber.value,
+        routingCode: elements.routingCode.value,
+        paymentReference: elements.paymentReference.value,
+        qrContent: elements.qrContent.value
+      }
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `invoice-${elements.invoiceNo.value || 'data'}.json`;
+    link.click();
+    
+    showNotification('Invoice data saved as JSON', 'success');
+  }
+  
+  // Load JSON
+  function handleLoadJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = event => {
+        try {
+          const data = JSON.parse(event.target.result);
+          loadJSONData(data);
+          showNotification('Invoice data loaded successfully', 'success');
+        } catch (err) {
+          console.error('JSON parse error:', err);
+          showNotification('Invalid JSON file', 'error');
+        }
+      };
+      reader.readAsText(file);
+    };
+    
+    input.click();
+  }
+  
+  // Load JSON data into form
+  function loadJSONData(data) {
+    if (data.seller) elements.seller.value = data.seller;
+    if (data.buyer) elements.buyer.value = data.buyer;
+    if (data.invoiceNo) elements.invoiceNo.value = data.invoiceNo;
+    if (data.invoiceDate) elements.invoiceDate.value = data.invoiceDate;
+    if (data.dueDate) elements.dueDate.value = data.dueDate;
+    if (data.currency) elements.currency.value = data.currency;
+    if (data.region) elements.region.value = data.region;
+    if (data.taxPct) elements.taxPct.value = data.taxPct;
+    if (data.discount) elements.discount.value = data.discount;
+    if (data.notes) elements.notes.value = data.notes;
+    if (data.sellerVAT) elements.sellerVAT.value = data.sellerVAT;
+    if (data.buyerVAT) elements.buyerVAT.value = data.buyerVAT;
+    if (data.bankDetails) elements.bankDetails.value = data.bankDetails;
+    
+    // Load payment details
+    if (data.paymentDetails) {
+      if (data.paymentDetails.bankName) elements.bankName.value = data.paymentDetails.bankName;
+      if (data.paymentDetails.accountHolder) elements.accountHolder.value = data.paymentDetails.accountHolder;
+      if (data.paymentDetails.accountNumber) elements.accountNumber.value = data.paymentDetails.accountNumber;
+      if (data.paymentDetails.routingCode) elements.routingCode.value = data.paymentDetails.routingCode;
+      if (data.paymentDetails.paymentReference) elements.paymentReference.value = data.paymentDetails.paymentReference;
+      if (data.paymentDetails.qrContent) elements.qrContent.value = data.paymentDetails.qrContent;
+    }
+    
+    // Load items
+    elements.itemsBody.innerHTML = '';
+    if (data.items && Array.isArray(data.items)) {
+      data.items.forEach(item => {
+        createRow(item.desc, item.qty, item.price, item.vatPct || 0);
+      });
+    } else {
+      createRow('Consulting services', 1, 150);
+    }
+    
+    // Update UI
+    handleRegionChange();
+    updatePreview();
+  }
+  
+  // Reset form
+  function resetForm() {
+    if (confirm('Are you sure you want to reset the form? All data will be lost.')) {
+      elements.seller.value = 'Acme Co.\n123 Business Road\nbusiness@acme.example\n+1 555 0123';
+      elements.buyer.value = 'Client Ltd.\n45 Client Ave.\nclient@example.com';
+      elements.invoiceNo.value = 'INV-1001';
+      elements.invoiceDate.value = todayISO();
+      elements.dueDate.value = addDaysISO(14);
+      elements.currency.value = '$';
+      elements.region.value = 'us';
+      elements.taxPct.value = '0';
+      elements.discount.value = '0';
+      elements.notes.value = 'Thank you for your business. Payment due within 14 days.';
+      elements.sellerVAT.value = '';
+      elements.buyerVAT.value = '';
+      elements.bankDetails.value = '';
+      elements.bankName.value = 'Global Bank Inc.';
+      elements.accountHolder.value = 'Acme Co.';
+      elements.accountNumber.value = 'XXXX-XXXX-XXXX-1234';
+      elements.routingCode.value = 'ROUTING-123';
+      elements.paymentReference.value = 'INV-1001';
+      elements.qrContent.value = '';
+      
+      elements.logoUpload.value = '';
+      AppState.logoDataUrl = '';
+      
+      elements.itemsBody.innerHTML = '';
+      createRow('Consulting services', 1, 150);
+      
+      handleRegionChange();
+      updatePreview();
+      
+      showNotification('Form reset successfully', 'success');
+    }
+  }
 
+  // ========== START APP ==========
+  document.addEventListener('DOMContentLoaded', initApp);
 })();
+
+// Make functions globally available for onclick handlers
+function removeRow(button) {
+  const row = button.closest('tr');
+  row.remove();
+  document.getElementById('itemsCount').textContent = `(${document.getElementById('itemsBody').querySelectorAll('tr').length} items)`;
+  setTimeout(() => {
+    const event = new Event('input', { bubbles: true });
+    document.getElementById('updatePreview').dispatchEvent(event);
+  }, 10);
+}
 </script>
 </body>
 </html>
