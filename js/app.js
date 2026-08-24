@@ -526,50 +526,12 @@
     setValidationError(null, elements.itemsError, '');
   }
 
-  function calculateSubtotal(items) {
-    return items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-  }
-
-  function calculateTotals(items, discount = 0) {
-    const subtotal = calculateSubtotal(items);
-    const appliedDiscount = Math.min(Math.max(0, discount), subtotal);
-    const isEU = elements.region.value === 'eu';
-
-    if (isEU) {
-      const discountFactor = subtotal > 0 ? (subtotal - appliedDiscount) / subtotal : 0;
-      const vatGroups = new Map();
-
-      items.forEach(item => {
-        const itemAmount = item.qty * item.price;
-        const rate = Number(item.vatPct) || 0;
-        vatGroups.set(rate, (vatGroups.get(rate) || 0) + itemAmount);
-      });
-
-      const vatBreakdown = Array.from(vatGroups, ([rate, grossBase]) => {
-        const base = grossBase * discountFactor;
-        return { rate, base, amount: base * rate / 100 };
-      }).sort((a, b) => a.rate - b.rate);
-      const taxAmount = vatBreakdown.reduce((sum, entry) => sum + entry.amount, 0);
-
-      return {
-        subtotal,
-        discount: appliedDiscount,
-        vatBreakdown,
-        taxAmount,
-        total: subtotal - appliedDiscount + taxAmount
-      };
-    }
-
-    const taxableAmount = subtotal - appliedDiscount;
-    const taxPct = parseFloat(elements.taxPct.value) || 0;
-    const taxAmount = taxableAmount * taxPct / 100;
-    return {
-      subtotal,
-      discount: appliedDiscount,
-      vatBreakdown: [],
-      taxAmount,
-      total: subtotal - appliedDiscount + taxAmount
-    };
+  function calculateInvoiceTotals(items, discount = 0) {
+    return window.InvoiceCalculations.calculateTotals(items, {
+      discount,
+      region: elements.region.value,
+      taxPct: elements.taxPct.value
+    });
   }
 
   function updateItemsCount() {
@@ -615,13 +577,13 @@
   function calculateTotal() {
     const items = collectItems();
     const discount = parseFloat(elements.discount.value) || 0;
-    return calculateTotals(items, discount).total;
+    return calculateInvoiceTotals(items, discount).total;
   }
 
   function updatePreview() {
     const items = collectItems();
     const discount = parseFloat(elements.discount.value) || 0;
-    const totals = calculateTotals(items, discount);
+    const totals = calculateInvoiceTotals(items, discount);
     const { subtotal, taxAmount, total, vatBreakdown } = totals;
     const isEU = elements.region.value === 'eu';
 
@@ -820,10 +782,12 @@
       elements.downloadPDFBtn.textContent = 'Generating PDF...';
       elements.downloadPDFBtn.classList.add('loading');
 
-      const qrCanvas = $('qrPreview').querySelector('canvas') || $('qrCode').querySelector('canvas');
+      const previewQR = $('qrPreview');
+      const editorQR = $('qrCode');
+      const qrCanvas = (previewQR && previewQR.querySelector('canvas')) ||
+        (editorQR && editorQR.querySelector('canvas'));
       const qrDataUrl = qrCanvas ? qrCanvas.toDataURL('image/png') : '';
-      const pdf = window.InvoicePDF.render(getInvoiceData(), { qrDataUrl });
-      pdf.save(`invoice-${elements.invoiceNo.value || 'document'}.pdf`);
+      window.InvoiceExport.downloadPDF(getInvoiceData(), qrDataUrl);
       showNotification('PDF downloaded successfully', 'success');
     } catch (error) {
       console.error('PDF export failed:', error);
@@ -838,17 +802,7 @@
   function saveJSON() {
     if (!validateInvoice()) return;
 
-    const data = getInvoiceData();
-
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-
-    const link = document.createElement('a');
-    const downloadUrl = URL.createObjectURL(dataBlob);
-    link.href = downloadUrl;
-    link.download = `invoice-${elements.invoiceNo.value || 'data'}.json`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
+    window.InvoiceExport.downloadJSON(getInvoiceData());
 
     showNotification('Invoice data saved as JSON', 'success');
   }

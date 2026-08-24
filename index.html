@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:" />
+<title>Professional Invoice Generator — US / EU</title>
+
+<script src="vendor/qrcode-generator-1.4.4.min.js"></script>
+
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+
+    <div id="notification" class="notification" aria-live="polite"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <h1>Professional Invoice Generator</h1>
+      </div>
+
+      <label for="logoUpload">Company Logo (PNG / JPG) — will appear top-right (max 220×80)</label>
+      <input id="logoUpload" type="file" accept="image/*" />
+      <div id="logoError" class="error"></div>
+
+      <label for="seller">Seller (From) <span class="muted">*required</span></label>
+      <textarea id="seller" rows="3" placeholder="Company name, address, email, phone"></textarea>
+      <div id="sellerError" class="error"></div>
+
+      <label for="buyer">Buyer (Bill To) <span class="muted">*required</span></label>
+      <textarea id="buyer" rows="3" placeholder="Client name, address, email"></textarea>
+      <div id="buyerError" class="error"></div>
+
+      <div class="row" style="margin-top:10px">
+        <div class="col">
+          <label for="invoiceNo">Invoice # <span class="muted">*required</span></label>
+          <input id="invoiceNo" type="text" placeholder="e.g. INV-1001" />
+          <div id="invoiceNoError" class="error"></div>
+        </div>
+        <div class="col">
+          <label for="invoiceDate">Invoice Date</label>
+          <input id="invoiceDate" type="date" />
+        </div>
+        <div class="col">
+          <label for="dueDate">Due Date</label>
+          <input id="dueDate" type="date" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label for="currency">Currency</label>
+          <select id="currency">
+            <option value="$">USD ($)</option>
+            <option value="€">EUR (€)</option>
+            <option value="£">GBP (£)</option>
+            <option value="¥">JPY (¥)</option>
+            <option value="₹">INR (₹)</option>
+            <option value="₽">RUB (₽)</option>
+            <option value="₿">BTC (₿)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="region">Region (style)</label>
+          <select id="region">
+            <option value="us">US Style</option>
+            <option value="eu">EU Style (VAT)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="taxPct">Default VAT / Tax %</label>
+          <input id="taxPct" type="number" value="0" step="0.01" min="0" max="100" />
+        </div>
+      </div>
+
+      <h3>Items <span id="itemsCount" class="muted">(0 items)</span></h3>
+      <div class="table-scroll" role="region" aria-label="Invoice items editor" tabindex="0">
+        <table id="itemsTable" aria-label="items input table">
+          <thead id="itemsInputHead">
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
+      <div id="itemsError" class="error"></div>
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap">
+        <button id="addItem" type="button">+ Add item</button>
+        <button id="clearItems" type="button" class="ghost">Clear all</button>
+        <button id="duplicateLast" type="button" class="ghost">Duplicate last</button>
+      </div>
+
+      <label for="discount" style="margin-top:16px">Discount (flat)</label>
+      <input id="discount" type="number" value="0" step="0.01" min="0" />
+
+      <label for="notes" style="margin-top:16px">Notes</label>
+      <textarea id="notes" rows="3" placeholder="Payment terms or additional information"></textarea>
+
+      <h3>Payment Details</h3>
+      <div class="payment-section">
+        <div class="payment-details">
+          <div class="payment-info">
+            <div class="payment-field">
+              <label for="bankName">Bank Name</label>
+              <input id="bankName" type="text" placeholder="e.g. Bank of America" />
+            </div>
+            <div class="payment-field">
+              <label for="accountHolder">Account Holder</label>
+              <input id="accountHolder" type="text" placeholder="Account holder name" />
+            </div>
+            <div class="payment-field">
+              <label id="accountNumberLabel" for="accountNumber">Account Number</label>
+              <input id="accountNumber" type="text" placeholder="Account number" />
+            </div>
+            <div class="payment-field">
+              <label id="routingCodeLabel" for="routingCode">Routing / SWIFT Code</label>
+              <input id="routingCode" type="text" placeholder="Routing or SWIFT code" />
+            </div>
+            <div class="payment-field">
+              <label for="paymentReference">Payment Reference</label>
+              <input id="paymentReference" type="text" placeholder="Uses invoice number when empty" />
+            </div>
+            <div class="payment-field">
+              <label for="qrContent">QR Code Content</label>
+              <textarea id="qrContent" rows="2" placeholder="Custom QR code content (optional)"></textarea>
+              <div class="small">Leave empty for automatic generation</div>
+            </div>
+          </div>
+          <div class="qr-code-container">
+            <div id="qrCode"></div>
+            <div class="small">Scan to pay</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="euExtras" style="margin-top:16px; display:none">
+        <label for="sellerVAT">Seller VAT number</label>
+        <input id="sellerVAT" type="text" placeholder="VAT / Tax ID" />
+        <label for="buyerVAT">Buyer VAT number</label>
+        <input id="buyerVAT" type="text" placeholder="Client VAT ID" />
+      </div>
+
+      <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap; padding-top:16px; border-top:1px solid var(--border)">
+        <button id="printBtn" type="button" class="ghost">Print</button>
+        <button id="downloadPDF" type="button">Download PDF</button>
+        <button id="saveJson" type="button" class="ghost">Save JSON</button>
+        <button id="loadJson" type="button" class="ghost">Load JSON</button>
+        <button id="resetForm" type="button" class="ghost">Reset</button>
+      </div>
+
+    </div>
+
+    <div class="card invoice-preview">
+      <div class="invoice-card" id="previewArea" role="document" aria-label="Invoice preview">
+      </div>
+    </div>
+
+  </div>
+
+<script src="vendor/jspdf-2.5.1.umd.min.js"></script>
+<script src="js/calculations.js"></script>
+<script src="js/invoice_pdf.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

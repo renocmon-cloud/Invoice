@@ -1,10 +1,13 @@
 (function(root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./vendor/jspdf-2.5.1.umd.min.js'));
+    module.exports = factory(
+      require('../vendor/jspdf-2.5.1.umd.min.js'),
+      require('./calculations.js')
+    );
   } else {
-    root.InvoicePDF = factory(root.jspdf);
+    root.InvoicePDF = factory(root.jspdf, root.InvoiceCalculations);
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function(jspdf) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function(jspdf, calculations) {
   const currencyCodes = {
     '$': 'USD',
     '€': 'EUR',
@@ -50,44 +53,9 @@
       .flatMap(line => pdf.splitTextToSize(line || ' ', width));
   }
 
-  function getTotals(invoice) {
-    const items = Array.isArray(invoice.items) ? invoice.items : [];
-    const subtotal = items.reduce((sum, item) => {
-      return sum + Number(item.qty || 0) * Number(item.price || 0);
-    }, 0);
-    const discount = Math.min(Math.max(0, Number(invoice.discount) || 0), subtotal);
-    let tax = 0;
-    let vatBreakdown = [];
-
-    if (invoice.region === 'eu') {
-      const discountFactor = subtotal > 0 ? (subtotal - discount) / subtotal : 0;
-      const vatGroups = new Map();
-      items.forEach(item => {
-        const amount = Number(item.qty || 0) * Number(item.price || 0);
-        const rate = Number(item.vatPct) || 0;
-        vatGroups.set(rate, (vatGroups.get(rate) || 0) + amount);
-      });
-      vatBreakdown = Array.from(vatGroups, ([rate, grossBase]) => {
-        const base = grossBase * discountFactor;
-        return { rate, base, amount: base * rate / 100 };
-      }).sort((a, b) => a.rate - b.rate);
-      tax = vatBreakdown.reduce((sum, entry) => sum + entry.amount, 0);
-    } else {
-      const taxableAmount = Math.max(0, subtotal - discount);
-      tax = taxableAmount * (Number(invoice.taxPct) || 0) / 100;
-    }
-
-    return {
-      subtotal,
-      discount,
-      tax,
-      vatBreakdown,
-      total: Math.max(0, subtotal - discount + tax)
-    };
-  }
-
   function render(invoice, options = {}) {
     if (!jspdf || !jspdf.jsPDF) throw new Error('jsPDF is not available');
+    if (!calculations) throw new Error('Invoice calculations are not available');
 
     const pdf = new jspdf.jsPDF({
       orientation: 'portrait',
@@ -105,7 +73,11 @@
     const muted = [90, 98, 110];
     const isEU = invoice.region === 'eu';
     const items = Array.isArray(invoice.items) ? invoice.items : [];
-    const totals = getTotals(invoice);
+    const totals = calculations.calculateTotals(invoice.items, {
+      discount: invoice.discount,
+      region: invoice.region,
+      taxPct: invoice.taxPct
+    });
     let y = 15;
 
     pdf.setProperties({
@@ -202,7 +174,9 @@
       pdf.setTextColor(...muted);
 
       columns.forEach(column => {
+        pdf.setFillColor(245, 246, 249);
         pdf.rect(x, y, column.width, height, 'FD');
+        pdf.setTextColor(...muted);
         const textX = column.align === 'right' ? x + column.width - 2 : x + 2;
         pdf.text(column.title, textX, y + 5.2, { align: column.align });
         x += column.width;
@@ -263,8 +237,8 @@
           const base = formatAmount(entry.base, invoice.currency);
           lines.push([`VAT ${rate}% (base ${base})`, formatAmount(entry.amount, invoice.currency)]);
         });
-      } else if (totals.tax > 0) {
-        lines.push(['Tax', formatAmount(totals.tax, invoice.currency)]);
+      } else if (totals.taxAmount > 0) {
+        lines.push(['Tax', formatAmount(totals.taxAmount, invoice.currency)]);
       }
       lines.push(['TOTAL', formatAmount(totals.total, invoice.currency)]);
 

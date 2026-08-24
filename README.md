@@ -16,7 +16,7 @@ Browser-based invoice generator with US and EU invoice styles. It does not requi
 
 ## Running locally
 
-Clone or download the complete repository, then open `invoice_generator.html` in a browser.
+Clone or download the complete repository, then open `index.html` in a browser.
 
 No installation, configuration, or internet connection is required. The JavaScript dependencies are stored in `vendor/`, and the interface uses system fonts.
 
@@ -30,3 +30,21 @@ The page uses a Content Security Policy that blocks remote scripts, network conn
 - [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator)
 
 The bundled versions, checksums, and license files are listed in [`vendor/README.md`](vendor/README.md).
+
+## Project structure
+
+- `index.html` — application markup
+- `styles.css` — interface and print styles
+- `js/app.js` — form state, validation, preview, and JSON import
+- `js/calculations.js` — Tax, VAT, discount, and total calculations
+- `js/export.js` — PDF and JSON downloads
+- `js/invoice_pdf.js` — paginated PDF renderer
+- `tests/` — calculation and structure tests
+
+## Tests
+
+Run the automated tests with Node.js:
+
+```sh
+npm test
+```
