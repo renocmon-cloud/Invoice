@@ -1,0 +1,6 @@
+/.gitattributes text eol=lf
+*.html -text
+*.js text eol=lf
+*.md text eol=lf
+vendor/*.js -text
+vendor/LICENSE-*.txt text eol=lf
