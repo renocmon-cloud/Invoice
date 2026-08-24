@@ -906,6 +906,7 @@ client@example.com</textarea>
 
   function generateQRCode(text, containerId) {
     const container = $(containerId);
+    if (!container) return;
     container.innerHTML = '';
     
     if (!text || text.trim() === '') {
@@ -1417,7 +1418,7 @@ client@example.com</textarea>
           <div class="invoice-title">INVOICE</div>
           <div class="small muted">Thank you for your business</div>
         </div>
-        ${AppState.logoDataUrl ? `<img src="${AppState.logoDataUrl}" class="logo-img" alt="Company Logo" />` : ''}
+        ${AppState.logoDataUrl ? `<img src="${escapeHtml(AppState.logoDataUrl)}" class="logo-img" alt="Company Logo" />` : ''}
       </div>
       
       <div class="meta-grid">
@@ -1543,6 +1544,7 @@ client@example.com</textarea>
       notes: elements.notes.value,
       sellerVAT: elements.sellerVAT.value,
       buyerVAT: elements.buyerVAT.value,
+      logoDataUrl: AppState.logoDataUrl,
       items: collectItems(),
       paymentDetails: {
         bankName: elements.bankName.value,
@@ -1611,41 +1613,66 @@ client@example.com</textarea>
   }
 
   function loadJSONData(data) {
-    if (data.seller) elements.seller.value = data.seller;
-    if (data.buyer) elements.buyer.value = data.buyer;
-    if (data.invoiceNo) elements.invoiceNo.value = data.invoiceNo;
-    if (data.invoiceDate) elements.invoiceDate.value = data.invoiceDate;
-    if (data.dueDate) elements.dueDate.value = data.dueDate;
-    if (data.currency) elements.currency.value = data.currency;
-    if (data.region) elements.region.value = data.region;
-    if (data.taxPct) elements.taxPct.value = data.taxPct;
-    if (data.discount) elements.discount.value = data.discount;
-    if (data.notes) elements.notes.value = data.notes;
-    if (data.sellerVAT) elements.sellerVAT.value = data.sellerVAT;
-    if (data.buyerVAT) elements.buyerVAT.value = data.buyerVAT;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('Invalid invoice data');
+    }
 
-    if (data.paymentDetails || data.bankDetails) {
-      const paymentDetails = data.paymentDetails || {};
-      const legacyDetails = data.bankDetails && !paymentDetails.iban
+    if ('seller' in data) elements.seller.value = data.seller ?? '';
+    if ('buyer' in data) elements.buyer.value = data.buyer ?? '';
+    if ('invoiceNo' in data) elements.invoiceNo.value = data.invoiceNo ?? '';
+    if ('invoiceDate' in data) elements.invoiceDate.value = data.invoiceDate ?? '';
+    if ('dueDate' in data) elements.dueDate.value = data.dueDate ?? '';
+    if ('currency' in data) elements.currency.value = data.currency ?? '';
+    if ('region' in data) elements.region.value = data.region ?? '';
+    if ('taxPct' in data) elements.taxPct.value = data.taxPct ?? '';
+    if ('discount' in data) elements.discount.value = data.discount ?? '';
+    if ('notes' in data) elements.notes.value = data.notes ?? '';
+    if ('sellerVAT' in data) elements.sellerVAT.value = data.sellerVAT ?? '';
+    if ('buyerVAT' in data) elements.buyerVAT.value = data.buyerVAT ?? '';
+    if ('logoDataUrl' in data) {
+      const logoDataUrl = typeof data.logoDataUrl === 'string' ? data.logoDataUrl : '';
+      AppState.logoDataUrl = logoDataUrl.startsWith('data:image/') ? logoDataUrl : '';
+      elements.logoUpload.value = '';
+    }
+
+    const paymentDetails = data.paymentDetails && typeof data.paymentDetails === 'object'
+      ? data.paymentDetails
+      : {};
+    const hasLegacyBankDetails = typeof data.bankDetails === 'string' && data.bankDetails.trim();
+
+    if (Object.keys(paymentDetails).length || hasLegacyBankDetails) {
+      const legacyDetails = hasLegacyBankDetails && !('iban' in paymentDetails)
         ? parseBankDetails(data.bankDetails)
         : {};
 
-      if (legacyDetails.bankName || paymentDetails.bankName) {
-        elements.bankName.value = legacyDetails.bankName || paymentDetails.bankName;
+      if ('bankName' in paymentDetails) {
+        elements.bankName.value = paymentDetails.bankName ?? '';
+      } else if ('bankName' in legacyDetails) {
+        elements.bankName.value = legacyDetails.bankName;
       }
-      if (legacyDetails.accountHolder || paymentDetails.accountHolder) {
-        elements.accountHolder.value = legacyDetails.accountHolder || paymentDetails.accountHolder;
+      if ('accountHolder' in paymentDetails) {
+        elements.accountHolder.value = paymentDetails.accountHolder ?? '';
+      } else if ('accountHolder' in legacyDetails) {
+        elements.accountHolder.value = legacyDetails.accountHolder;
       }
-      if (paymentDetails.iban || legacyDetails.iban || paymentDetails.accountNumber) {
-        elements.accountNumber.value = paymentDetails.iban || legacyDetails.iban || paymentDetails.accountNumber;
+      if ('iban' in paymentDetails) {
+        elements.accountNumber.value = paymentDetails.iban ?? '';
+      } else if ('iban' in legacyDetails) {
+        elements.accountNumber.value = legacyDetails.iban;
+      } else if ('accountNumber' in paymentDetails) {
+        elements.accountNumber.value = paymentDetails.accountNumber ?? '';
       }
-      if (paymentDetails.bicSwift || legacyDetails.bicSwift || paymentDetails.routingCode) {
-        elements.routingCode.value = paymentDetails.bicSwift || legacyDetails.bicSwift || paymentDetails.routingCode;
+      if ('bicSwift' in paymentDetails) {
+        elements.routingCode.value = paymentDetails.bicSwift ?? '';
+      } else if ('bicSwift' in legacyDetails) {
+        elements.routingCode.value = legacyDetails.bicSwift;
+      } else if ('routingCode' in paymentDetails) {
+        elements.routingCode.value = paymentDetails.routingCode ?? '';
       }
       if ('paymentReference' in paymentDetails) {
-        elements.paymentReference.value = paymentDetails.paymentReference || '';
+        elements.paymentReference.value = paymentDetails.paymentReference ?? '';
       }
-      if ('qrContent' in paymentDetails) elements.qrContent.value = paymentDetails.qrContent || '';
+      if ('qrContent' in paymentDetails) elements.qrContent.value = paymentDetails.qrContent ?? '';
     }
     
     elements.itemsBody.innerHTML = '';
