@@ -845,15 +845,40 @@ client@example.com</textarea>
   const $ = id => document.getElementById(id);
   const escapeHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   
-  const todayISO = () => {
-    const d = new Date();
-    return d.toISOString().split('T')[0];
+  const toDateInputValue = date => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
-  
-  const addDaysISO = (days) => {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString().split('T')[0];
+
+  const todayDateValue = () => toDateInputValue(new Date());
+
+  const addDaysDateValue = days => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return toDateInputValue(date);
+  };
+
+  const formatDisplayDate = dateValue => {
+    const parts = dateValue.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return '';
+
+    const [year, month, day] = parts;
+    const date = new Date(year, month - 1, day, 12);
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      return '';
+    }
+
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
   
   function formatCurrency(amount, currencySymbol) {
@@ -970,8 +995,8 @@ client@example.com</textarea>
   };
 
   function initApp() {
-    elements.invoiceDate.value = todayISO();
-    elements.dueDate.value = addDaysISO(14);
+    elements.invoiceDate.value = todayDateValue();
+    elements.dueDate.value = addDaysDateValue(14);
 
     AppState.currentRegion = elements.region.value;
     updatePaymentFieldLabels(AppState.currentRegion);
@@ -1304,12 +1329,6 @@ client@example.com</textarea>
     const total = Math.max(0, subtotal - discount + taxAmount);
     const isEU = elements.region.value === 'eu';
     
-    const formatDate = (dateStr) => {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    };
-    
     let itemsHTML = '';
     items.forEach(item => {
       const amount = item.qty * item.price;
@@ -1419,11 +1438,11 @@ client@example.com</textarea>
           </div>
           <div class="row">
             <div class="item"><strong>Invoice Date</strong></div>
-            <div class="item">${formatDate(elements.invoiceDate.value)}</div>
+            <div class="item">${formatDisplayDate(elements.invoiceDate.value)}</div>
           </div>
           <div class="row">
             <div class="item"><strong>Due Date</strong></div>
-            <div class="item">${formatDate(elements.dueDate.value)}</div>
+            <div class="item">${formatDisplayDate(elements.dueDate.value)}</div>
           </div>
         </div>
       </div>
@@ -1647,8 +1666,8 @@ client@example.com</textarea>
       elements.seller.value = 'Acme Co.\n123 Business Road\nbusiness@acme.example\n+1 555 0123';
       elements.buyer.value = 'Client Ltd.\n45 Client Ave.\nclient@example.com';
       elements.invoiceNo.value = 'INV-1001';
-      elements.invoiceDate.value = todayISO();
-      elements.dueDate.value = addDaysISO(14);
+      elements.invoiceDate.value = todayDateValue();
+      elements.dueDate.value = addDaysDateValue(14);
       elements.currency.value = '$';
       elements.region.value = 'us';
       elements.taxPct.value = '0';
