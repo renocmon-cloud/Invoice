@@ -797,7 +797,7 @@ client@example.com</textarea>
             </div>
             <div class="payment-field">
               <label>Payment Reference</label>
-              <input id="paymentReference" type="text" placeholder="Invoice number or custom reference" value="INV-1001" />
+              <input id="paymentReference" type="text" placeholder="Uses invoice number when empty" />
             </div>
             <div class="payment-field">
               <label>QR Code Content</label>
@@ -1623,8 +1623,10 @@ client@example.com</textarea>
       if (paymentDetails.bicSwift || legacyDetails.bicSwift || paymentDetails.routingCode) {
         elements.routingCode.value = paymentDetails.bicSwift || legacyDetails.bicSwift || paymentDetails.routingCode;
       }
-      if (paymentDetails.paymentReference) elements.paymentReference.value = paymentDetails.paymentReference;
-      if (paymentDetails.qrContent) elements.qrContent.value = paymentDetails.qrContent;
+      if ('paymentReference' in paymentDetails) {
+        elements.paymentReference.value = paymentDetails.paymentReference || '';
+      }
+      if ('qrContent' in paymentDetails) elements.qrContent.value = paymentDetails.qrContent || '';
     }
     
     elements.itemsBody.innerHTML = '';
@@ -1658,7 +1660,7 @@ client@example.com</textarea>
       elements.accountHolder.value = 'Acme Co.';
       elements.accountNumber.value = 'XXXX-XXXX-XXXX-1234';
       elements.routingCode.value = 'ROUTING-123';
-      elements.paymentReference.value = 'INV-1001';
+      elements.paymentReference.value = '';
       elements.qrContent.value = '';
       
       elements.logoUpload.value = '';
