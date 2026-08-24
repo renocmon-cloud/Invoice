@@ -61,6 +61,7 @@
     box-shadow:var(--shadow);
     transition:var(--transition);
     border:1px solid var(--border-light);
+    min-width:0;
   }
   
   .card:hover{
@@ -260,6 +261,13 @@
 
   @keyframes spin{
     to{transform:rotate(360deg)}
+  }
+
+  .table-scroll{
+    width:100%;
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+    -webkit-overflow-scrolling:touch;
   }
 
   table#itemsTable{
@@ -608,7 +616,6 @@
     
     .invoice-preview{
       position:static;
-      order:-1;
     }
     
     .payment-details, .payment-details-preview{
@@ -632,6 +639,14 @@
     
     .invoice-card{
       padding:24px;
+    }
+
+    table#itemsTable{
+      min-width:680px;
+    }
+
+    .items-table{
+      min-width:620px;
     }
     
     .meta-grid{
@@ -671,6 +686,14 @@
       padding:20px;
       min-height:auto;
       font-family:Georgia,'Times New Roman',serif !important;
+    }
+
+    .table-scroll{
+      overflow:visible;
+    }
+
+    .items-table, table#itemsTable{
+      min-width:0;
     }
     
     button,input,select,textarea{
@@ -757,11 +780,13 @@ client@example.com</textarea>
       </div>
 
       <h3>Items <span id="itemsCount" class="muted">(0 items)</span></h3>
-      <table id="itemsTable" aria-label="items input table">
-        <thead id="itemsInputHead">
-        </thead>
-        <tbody id="itemsBody"></tbody>
-      </table>
+      <div class="table-scroll" role="region" aria-label="Invoice items editor" tabindex="0">
+        <table id="itemsTable" aria-label="items input table">
+          <thead id="itemsInputHead">
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
       <div id="itemsError" class="error"></div>
       <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap">
         <button id="addItem">+ Add item</button>

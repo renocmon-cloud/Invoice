@@ -751,10 +751,12 @@
         </div>
       </div>
 
-      <table class="items-table">
-        <thead>${tableHeaders}</thead>
-        <tbody>${itemsHTML}</tbody>
-      </table>
+      <div class="table-scroll" role="region" aria-label="Invoice items preview" tabindex="0">
+        <table class="items-table">
+          <thead>${tableHeaders}</thead>
+          <tbody>${itemsHTML}</tbody>
+        </table>
+      </div>
 
       <div class="summary">
         ${summaryHTML}
