@@ -11,7 +11,7 @@ Browser-based invoice generator for US and EU invoices. It does not require a ba
 - Editable line items, discounts, notes, and payment details
 - Company logo upload
 - Payment QR code
-- PDF export and printing
+- Searchable, paginated PDF export and printing
 - JSON import and export
 
 ## Running locally
@@ -26,7 +26,6 @@ The page uses a Content Security Policy that blocks remote scripts, network conn
 
 ## Libraries
 
-- [html2canvas](https://github.com/niklasvh/html2canvas)
 - [jsPDF](https://github.com/parallax/jsPDF)
 - [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator)
 

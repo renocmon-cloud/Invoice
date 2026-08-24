@@ -752,57 +752,7 @@
     window.print();
   }
 
-  async function exportPDF() {
-    if (!validateInvoice()) return;
-
-    try {
-      elements.downloadPDFBtn.disabled = true;
-      elements.downloadPDFBtn.textContent = 'Generating PDF...';
-      elements.downloadPDFBtn.classList.add('loading');
-
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const element = elements.previewArea;
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = canvas.height * imgWidth / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`invoice-${elements.invoiceNo.value || 'document'}.pdf`);
-      showNotification('PDF downloaded successfully', 'success');
-
-    } catch (error) {
-      console.error('PDF export failed:', error);
-      showNotification('PDF export failed. Please try again.', 'error');
-    } finally {
-      elements.downloadPDFBtn.disabled = false;
-      elements.downloadPDFBtn.textContent = 'Download PDF';
-      elements.downloadPDFBtn.classList.remove('loading');
-    }
-  }
-
-  function saveJSON() {
-    if (!validateInvoice()) return;
-
+  function getInvoiceData() {
     const accountFields = elements.region.value === 'eu'
       ? {
           iban: elements.accountNumber.value,
@@ -813,7 +763,7 @@
           routingCode: elements.routingCode.value
         };
 
-    const data = {
+    return {
       seller: elements.seller.value,
       buyer: elements.buyer.value,
       invoiceNo: elements.invoiceNo.value,
@@ -836,14 +786,45 @@
         qrContent: elements.qrContent.value
       }
     };
+  }
+
+  function exportPDF() {
+    if (!validateInvoice()) return;
+
+    try {
+      elements.downloadPDFBtn.disabled = true;
+      elements.downloadPDFBtn.textContent = 'Generating PDF...';
+      elements.downloadPDFBtn.classList.add('loading');
+
+      const qrCanvas = $('qrPreview').querySelector('canvas') || $('qrCode').querySelector('canvas');
+      const qrDataUrl = qrCanvas ? qrCanvas.toDataURL('image/png') : '';
+      const pdf = window.InvoicePDF.render(getInvoiceData(), { qrDataUrl });
+      pdf.save(`invoice-${elements.invoiceNo.value || 'document'}.pdf`);
+      showNotification('PDF downloaded successfully', 'success');
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      showNotification('PDF export failed. Please try again.', 'error');
+    } finally {
+      elements.downloadPDFBtn.disabled = false;
+      elements.downloadPDFBtn.textContent = 'Download PDF';
+      elements.downloadPDFBtn.classList.remove('loading');
+    }
+  }
+
+  function saveJSON() {
+    if (!validateInvoice()) return;
+
+    const data = getInvoiceData();
 
     const dataStr = JSON.stringify(data, null, 2);
     const dataBlob = new Blob([dataStr], {type: 'application/json'});
 
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(dataBlob);
+    const downloadUrl = URL.createObjectURL(dataBlob);
+    link.href = downloadUrl;
     link.download = `invoice-${elements.invoiceNo.value || 'data'}.json`;
     link.click();
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
 
     showNotification('Invoice data saved as JSON', 'success');
   }
