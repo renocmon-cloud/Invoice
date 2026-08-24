@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Professional Invoice Generator — US / EU</title>
 
-<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto+Slab:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- QR Code Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 <style>
@@ -264,7 +262,6 @@
     to{transform:rotate(360deg)}
   }
 
-  /* items input table */
   table#itemsTable{
     width:100%;
     border-collapse:separate;
@@ -321,7 +318,6 @@
     font-size:12px;
   }
 
-  /* payment details section */
   .payment-section{
     margin-top:20px;
     padding:16px;
@@ -390,7 +386,6 @@
     padding:8px 10px;
   }
 
-  /* preview */
   .invoice-preview{
     padding:20px;
     position:sticky;
@@ -695,10 +690,8 @@
 <body>
   <div class="app-container">
 
-    <!-- Notification area -->
     <div id="notification" class="notification" aria-live="polite"></div>
 
-    <!-- LEFT: controls -->
     <div class="card">
       <div class="card-header">
         <h1>Professional Invoice Generator</h1>
@@ -766,7 +759,6 @@ client@example.com</textarea>
       <h3>Items <span id="itemsCount" class="muted">(0 items)</span></h3>
       <table id="itemsTable" aria-label="items input table">
         <thead id="itemsInputHead">
-          <!-- injected -->
         </thead>
         <tbody id="itemsBody"></tbody>
       </table>
@@ -784,7 +776,6 @@ client@example.com</textarea>
       <label style="margin-top:16px">Notes</label>
       <textarea id="notes" rows="3" placeholder="Payment terms, bank details">Thank you for your business. Payment due within 14 days.</textarea>
 
-      <!-- Payment Details Section -->
       <h3>Payment Details</h3>
       <div class="payment-section">
         <div class="payment-details">
@@ -822,7 +813,6 @@ client@example.com</textarea>
         </div>
       </div>
 
-      <!-- EU-only extra fields -->
       <div id="euExtras" style="margin-top:16px; display:none">
         <label>Seller VAT number</label>
         <input id="sellerVAT" type="text" placeholder="VAT / Tax ID" />
@@ -843,26 +833,21 @@ client@example.com</textarea>
 
     </div>
 
-    <!-- RIGHT: preview -->
     <div class="card invoice-preview">
       <div class="invoice-card" id="previewArea" role="document" aria-label="Invoice preview">
-        <!-- rendered by JS -->
       </div>
     </div>
 
   </div>
 
-<!-- libs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 (function(){
-  // ========== HELPERS ==========
   const $ = id => document.getElementById(id);
   const escapeHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   
-  // Fixed date functions
   const todayISO = () => {
     const d = new Date();
     return d.toISOString().split('T')[0];
@@ -874,22 +859,17 @@ client@example.com</textarea>
     return d.toISOString().split('T')[0];
   };
   
-  // Format currency with proper localization
   function formatCurrency(amount, currencySymbol) {
-    // Handle Bitcoin separately
     if (currencySymbol === '₿') {
       return '₿' + parseFloat(amount).toFixed(8);
     }
     
-    // Format with thousands separators
     const formatted = parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return currencySymbol + formatted;
   }
 
-  // Show notification
   function showNotification(message, type = 'success') {
     const notification = $('notification');
-    notification.textContent = message;
     notification.className = `notification ${type}`;
     notification.innerHTML = `
       <span class="icon">${type === 'success' ? '✓' : '⚠'}</span>
@@ -902,7 +882,6 @@ client@example.com</textarea>
     }, 3000);
   }
 
-  // Generate QR Code with better error handling
   function generateQRCode(text, containerId) {
     const container = $(containerId);
     container.innerHTML = '';
@@ -913,7 +892,6 @@ client@example.com</textarea>
     }
     
     try {
-      // Use the qrcode-generator library properly
       const qr = qrcode(0, 'M');
       qr.addData(text);
       qr.make();
@@ -926,11 +904,9 @@ client@example.com</textarea>
       canvas.height = qrSize;
       const ctx = canvas.getContext('2d');
       
-      // White background
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, qrSize, qrSize);
       
-      // Black modules with better anti-aliasing
       ctx.fillStyle = '#000000';
       for (let row = 0; row < qr.getModuleCount(); row++) {
         for (let col = 0; col < qr.getModuleCount(); col++) {
@@ -952,15 +928,12 @@ client@example.com</textarea>
     }
   }
 
-  // ========== STATE MANAGEMENT ==========
   const AppState = {
     logoDataUrl: '',
     updateTimeout: null,
-    currentRegion: 'us',
-    taxItems: []
+    currentRegion: 'us'
   };
 
-  // ========== DOM ELEMENTS ==========
   const elements = {
     logoUpload: $('logoUpload'),
     seller: $('seller'),
@@ -992,7 +965,6 @@ client@example.com</textarea>
     loadJsonBtn: $('loadJson'),
     resetFormBtn: $('resetForm'),
     qrContent: $('qrContent'),
-    // Payment details
     bankName: $('bankName'),
     accountHolder: $('accountHolder'),
     accountNumber: $('accountNumber'),
@@ -1000,31 +972,23 @@ client@example.com</textarea>
     paymentReference: $('paymentReference')
   };
 
-  // ========== INITIALIZATION ==========
   function initApp() {
-    // Set default dates
     elements.invoiceDate.value = todayISO();
     elements.dueDate.value = addDaysISO(14);
     
-    // Set initial region
     AppState.currentRegion = elements.region.value;
     
-    // Render UI
     renderItemsInputHead();
     createRow('Consulting services', 2, 150, parseFloat(elements.taxPct.value||0));
     updatePreview();
     updateQRCode();
     
-    // Bind events
     bindEvents();
   }
 
-  // ========== EVENT BINDING ==========
   function bindEvents() {
-    // Logo upload
     elements.logoUpload.addEventListener('change', handleLogoUpload);
-    
-    // Item management
+
     elements.addItemBtn.addEventListener('click', () => {
       createRow('New item', 1, 0);
       showNotification('New item added', 'success');
@@ -1044,14 +1008,12 @@ client@example.com</textarea>
     elements.addTaxItemBtn.addEventListener('click', addTaxItem);
     elements.resetFormBtn.addEventListener('click', resetForm);
     
-    // Main actions
     elements.updatePreviewBtn.addEventListener('click', updatePreview);
     elements.printBtn.addEventListener('click', handlePrint);
     elements.downloadPDFBtn.addEventListener('click', exportPDF);
     elements.saveJsonBtn.addEventListener('click', saveJSON);
     elements.loadJsonBtn.addEventListener('click', handleLoadJSON);
     
-    // Auto-update on input changes
     const autoUpdateElements = [
       elements.seller, elements.buyer, elements.invoiceNo, elements.invoiceDate, 
       elements.dueDate, elements.currency, elements.region, elements.taxPct, 
@@ -1071,21 +1033,16 @@ client@example.com</textarea>
     });
   }
 
-  // ========== CORE FUNCTIONS ==========
-  
-  // Handle logo upload with validation
   function handleLogoUpload(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     
-    // Validate file type
     if (!file.type.match('image.*')) {
       $('logoError').textContent = 'Please select an image file (PNG, JPG, etc.)';
       $('logoError').style.display = 'block';
       return;
     }
     
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       $('logoError').textContent = 'Image size should be less than 2MB';
       $('logoError').style.display = 'block';
@@ -1097,7 +1054,6 @@ client@example.com</textarea>
     const reader = new FileReader();
     reader.onload = () => {
       AppState.logoDataUrl = reader.result;
-      // Validate image dimensions
       const img = new Image();
       img.onload = function() {
         if (this.width > 220 || this.height > 80) {
@@ -1114,14 +1070,12 @@ client@example.com</textarea>
     reader.readAsDataURL(file);
   }
 
-  // Handle region change
   function handleRegionChange() {
     const newRegion = elements.region.value;
     
     if (newRegion !== AppState.currentRegion) {
       AppState.currentRegion = newRegion;
       
-      // Rebuild items table for new region
       const currentItems = collectItems();
       elements.itemsBody.innerHTML = '';
       
@@ -1133,7 +1087,6 @@ client@example.com</textarea>
         }
       });
       
-      // Show/hide EU extras
       elements.euExtras.style.display = newRegion === 'eu' ? 'block' : 'none';
       
       renderItemsInputHead();
@@ -1141,7 +1094,6 @@ client@example.com</textarea>
     }
   }
 
-  // Render items input header based on region
   function renderItemsInputHead() {
     const isEU = elements.region.value === 'eu';
     
@@ -1167,7 +1119,6 @@ client@example.com</textarea>
     }
   }
 
-  // Create new item row
   function createRow(desc = '', qty = 1, price = 0, vatPct = 0) {
     const isEU = elements.region.value === 'eu';
     const row = document.createElement('tr');
@@ -1181,7 +1132,7 @@ client@example.com</textarea>
         <td>
           <div class="item-amount" style="padding:8px 4px">${formatCurrency(qty * price, elements.currency.value)}</div>
           <div class="actions">
-            <button class="ghost" onclick="removeRow(this)" style="padding:4px 8px;font-size:11px">✕</button>
+            <button class="ghost remove-item" type="button" style="padding:4px 8px;font-size:11px" aria-label="Remove item">✕</button>
           </div>
         </td>
       `;
@@ -1193,13 +1144,12 @@ client@example.com</textarea>
         <td>
           <div class="item-amount" style="padding:8px 4px">${formatCurrency(qty * price, elements.currency.value)}</div>
           <div class="actions">
-            <button class="ghost" onclick="removeRow(this)" style="padding:4px 8px;font-size:11px">✕</button>
+            <button class="ghost remove-item" type="button" style="padding:4px 8px;font-size:11px" aria-label="Remove item">✕</button>
           </div>
         </td>
       `;
     }
     
-    // Add event listeners for auto-calculation
     const inputs = row.querySelectorAll('input');
     inputs.forEach(input => {
       input.addEventListener('input', () => {
@@ -1207,13 +1157,14 @@ client@example.com</textarea>
         schedulePreviewUpdate();
       });
     });
+
+    row.querySelector('.remove-item').addEventListener('click', () => removeRow(row));
     
     elements.itemsBody.appendChild(row);
     updateItemsCount();
     return row;
   }
 
-  // Calculate row amount
   function calculateRow(row) {
     const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
     const price = parseFloat(row.querySelector('.item-price').value) || 0;
@@ -1224,16 +1175,13 @@ client@example.com</textarea>
     }
   }
 
-  // Remove row
-  function removeRow(button) {
-    const row = button.closest('tr');
+  function removeRow(row) {
     row.remove();
     updateItemsCount();
     updatePreview();
     showNotification('Item removed', 'success');
   }
 
-  // Duplicate last item
   function duplicateLastItem() {
     const rows = elements.itemsBody.querySelectorAll('tr');
     if (rows.length === 0) return;
@@ -1248,7 +1196,6 @@ client@example.com</textarea>
     showNotification('Last item duplicated', 'success');
   }
 
-  // Add tax item
   function addTaxItem() {
     const items = collectItems();
     if (items.length === 0) {
@@ -1268,7 +1215,6 @@ client@example.com</textarea>
     }
   }
 
-  // Collect all items from table
   function collectItems() {
     const rows = elements.itemsBody.querySelectorAll('tr');
     const items = [];
@@ -1294,23 +1240,19 @@ client@example.com</textarea>
     return items;
   }
 
-  // Calculate subtotal
   function calculateSubtotal(items) {
     return items.reduce((sum, item) => sum + (item.qty * item.price), 0);
   }
 
-  // Calculate tax amount
   function calculateTax(items, discount = 0) {
     const isEU = elements.region.value === 'eu';
     
     if (isEU) {
-      // EU: Calculate VAT per item
       return items.reduce((sum, item) => {
         const itemAmount = item.qty * item.price;
         return sum + (itemAmount * (item.vatPct || 0) / 100);
       }, 0);
     } else {
-      // US: Apply tax percentage to subtotal minus discount
       const subtotal = calculateSubtotal(items);
       const taxableAmount = Math.max(0, subtotal - discount);
       const taxPct = parseFloat(elements.taxPct.value) || 0;
@@ -1318,24 +1260,20 @@ client@example.com</textarea>
     }
   }
 
-  // Update items count display
   function updateItemsCount() {
     const count = elements.itemsBody.querySelectorAll('tr').length;
     elements.itemsCount.textContent = `(${count} item${count !== 1 ? 's' : ''})`;
   }
 
-  // Schedule preview update (debounced)
   function schedulePreviewUpdate() {
     clearTimeout(AppState.updateTimeout);
     AppState.updateTimeout = setTimeout(updatePreview, 300);
   }
 
-  // Update QR code
   function updateQRCode() {
     let qrText = elements.qrContent.value.trim();
     
     if (!qrText) {
-      // Auto-generate QR content
       const bankName = elements.bankName.value || '';
       const accountHolder = elements.accountHolder.value || '';
       const accountNumber = elements.accountNumber.value || '';
@@ -1353,7 +1291,6 @@ client@example.com</textarea>
     generateQRCode(qrText, 'qrCode');
   }
 
-  // Calculate total amount
   function calculateTotal() {
     const items = collectItems();
     const subtotal = calculateSubtotal(items);
@@ -1363,7 +1300,6 @@ client@example.com</textarea>
     return Math.max(0, subtotal - discount + taxAmount);
   }
 
-  // Update preview
   function updatePreview() {
     const items = collectItems();
     const subtotal = calculateSubtotal(items);
@@ -1372,14 +1308,12 @@ client@example.com</textarea>
     const total = Math.max(0, subtotal - discount + taxAmount);
     const isEU = elements.region.value === 'eu';
     
-    // Format dates properly
     const formatDate = (dateStr) => {
       if (!dateStr) return '';
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
     
-    // Build items HTML
     let itemsHTML = '';
     items.forEach(item => {
       const amount = item.qty * item.price;
@@ -1405,7 +1339,6 @@ client@example.com</textarea>
       }
     });
     
-    // Build summary HTML
     let summaryHTML = '';
     if (subtotal > 0) {
       summaryHTML += `<div class="line"><span>Subtotal</span><span>${formatCurrency(subtotal, elements.currency.value)}</span></div>`;
@@ -1422,7 +1355,6 @@ client@example.com</textarea>
     
     summaryHTML += `<div class="line total"><span>TOTAL</span><span>${formatCurrency(total, elements.currency.value)}</span></div>`;
     
-    // Build payment details preview
     const bankName = elements.bankName.value || '';
     const accountHolder = elements.accountHolder.value || '';
     const accountNumber = elements.accountNumber.value || '';
@@ -1448,7 +1380,6 @@ client@example.com</textarea>
       `;
     }
     
-    // Generate QR code for preview
     setTimeout(() => {
       let qrText = elements.qrContent.value.trim();
       
@@ -1463,8 +1394,7 @@ client@example.com</textarea>
       generateQRCode(qrText, 'qrPreview');
     }, 100);
     
-    // Build the final preview HTML
-    const tableHeaders = isEU ? 
+    const tableHeaders = isEU ?
       `<tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>VAT %</th><th>Amount</th></tr>` :
       `<tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>`;
     
@@ -1523,18 +1453,13 @@ client@example.com</textarea>
       ${paymentDetailsHTML}
     `;
     
-    // Update QR code in payment section
     updateQRCode();
   }
 
-  // ========== EXPORT FUNCTIONS ==========
-  
-  // Handle print
   function handlePrint() {
     window.print();
   }
   
-  // Export PDF
   async function exportPDF() {
     try {
       elements.downloadPDFBtn.disabled = true;
@@ -1545,7 +1470,6 @@ client@example.com</textarea>
       const pdf = new jsPDF('p', 'mm', 'a4');
       const element = elements.previewArea;
       
-      // Use html2canvas to capture the preview
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -1553,8 +1477,8 @@ client@example.com</textarea>
       });
       
       const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
+      const imgWidth = 210;
+      const pageHeight = 295;
       const imgHeight = canvas.height * imgWidth / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
@@ -1562,7 +1486,6 @@ client@example.com</textarea>
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
       
-      // Add new pages if content is too long
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -1583,7 +1506,6 @@ client@example.com</textarea>
     }
   }
   
-  // Save JSON
   function saveJSON() {
     const data = {
       seller: elements.seller.value,
@@ -1621,7 +1543,6 @@ client@example.com</textarea>
     showNotification('Invoice data saved as JSON', 'success');
   }
   
-  // Load JSON
   function handleLoadJSON() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -1648,7 +1569,6 @@ client@example.com</textarea>
     input.click();
   }
   
-  // Load JSON data into form
   function loadJSONData(data) {
     if (data.seller) elements.seller.value = data.seller;
     if (data.buyer) elements.buyer.value = data.buyer;
@@ -1664,7 +1584,6 @@ client@example.com</textarea>
     if (data.buyerVAT) elements.buyerVAT.value = data.buyerVAT;
     if (data.bankDetails) elements.bankDetails.value = data.bankDetails;
     
-    // Load payment details
     if (data.paymentDetails) {
       if (data.paymentDetails.bankName) elements.bankName.value = data.paymentDetails.bankName;
       if (data.paymentDetails.accountHolder) elements.accountHolder.value = data.paymentDetails.accountHolder;
@@ -1674,7 +1593,6 @@ client@example.com</textarea>
       if (data.paymentDetails.qrContent) elements.qrContent.value = data.paymentDetails.qrContent;
     }
     
-    // Load items
     elements.itemsBody.innerHTML = '';
     if (data.items && Array.isArray(data.items)) {
       data.items.forEach(item => {
@@ -1684,12 +1602,10 @@ client@example.com</textarea>
       createRow('Consulting services', 1, 150);
     }
     
-    // Update UI
     handleRegionChange();
     updatePreview();
   }
   
-  // Reset form
   function resetForm() {
     if (confirm('Are you sure you want to reset the form? All data will be lost.')) {
       elements.seller.value = 'Acme Co.\n123 Business Road\nbusiness@acme.example\n+1 555 0123';
@@ -1725,20 +1641,8 @@ client@example.com</textarea>
     }
   }
 
-  // ========== START APP ==========
   document.addEventListener('DOMContentLoaded', initApp);
 })();
-
-// Make functions globally available for onclick handlers
-function removeRow(button) {
-  const row = button.closest('tr');
-  row.remove();
-  document.getElementById('itemsCount').textContent = `(${document.getElementById('itemsBody').querySelectorAll('tr').length} items)`;
-  setTimeout(() => {
-    const event = new Event('input', { bubbles: true });
-    document.getElementById('updatePreview').dispatchEvent(event);
-  }, 10);
-}
 </script>
 </body>
 </html>
