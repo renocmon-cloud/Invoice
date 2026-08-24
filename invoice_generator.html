@@ -66,7 +66,6 @@
   
   .card:hover{
     box-shadow:var(--shadow-lg);
-    transform:translateY(-2px);
   }
   
   .card-header{
@@ -725,22 +724,17 @@
       <div id="logoError" class="error"></div>
 
       <label>Seller (From) <span class="muted">*required</span></label>
-      <textarea id="seller" rows="3" placeholder="Company name, address, email, phone">Acme Co.
-123 Business Road
-business@acme.example
-+1 555 0123</textarea>
+      <textarea id="seller" rows="3" placeholder="Company name, address, email, phone"></textarea>
       <div id="sellerError" class="error"></div>
 
       <label>Buyer (Bill To) <span class="muted">*required</span></label>
-      <textarea id="buyer" rows="3" placeholder="Client name, address, email">Client Ltd.
-45 Client Ave.
-client@example.com</textarea>
+      <textarea id="buyer" rows="3" placeholder="Client name, address, email"></textarea>
       <div id="buyerError" class="error"></div>
 
       <div class="row" style="margin-top:10px">
         <div class="col">
           <label>Invoice # <span class="muted">*required</span></label>
-          <input id="invoiceNo" type="text" value="INV-1001" />
+          <input id="invoiceNo" type="text" placeholder="e.g. INV-1001" />
           <div id="invoiceNoError" class="error"></div>
         </div>
         <div class="col">
@@ -798,7 +792,7 @@ client@example.com</textarea>
       <input id="discount" type="number" value="0" step="0.01" min="0" />
 
       <label style="margin-top:16px">Notes</label>
-      <textarea id="notes" rows="3" placeholder="Payment terms, bank details">Thank you for your business. Payment due within 14 days.</textarea>
+      <textarea id="notes" rows="3" placeholder="Payment terms or additional information"></textarea>
 
       <h3>Payment Details</h3>
       <div class="payment-section">
@@ -806,19 +800,19 @@ client@example.com</textarea>
           <div class="payment-info">
             <div class="payment-field">
               <label>Bank Name</label>
-              <input id="bankName" type="text" placeholder="e.g. Bank of America" value="Global Bank Inc." />
+              <input id="bankName" type="text" placeholder="e.g. Bank of America" />
             </div>
             <div class="payment-field">
               <label>Account Holder</label>
-              <input id="accountHolder" type="text" placeholder="Account holder name" value="Acme Co." />
+              <input id="accountHolder" type="text" placeholder="Account holder name" />
             </div>
             <div class="payment-field">
               <label id="accountNumberLabel">Account Number</label>
-              <input id="accountNumber" type="text" placeholder="Account number" value="XXXX-XXXX-XXXX-1234" />
+              <input id="accountNumber" type="text" placeholder="Account number" />
             </div>
             <div class="payment-field">
               <label id="routingCodeLabel">Routing / SWIFT Code</label>
-              <input id="routingCode" type="text" placeholder="Routing or SWIFT code" value="ROUTING-123" />
+              <input id="routingCode" type="text" placeholder="Routing or SWIFT code" />
             </div>
             <div class="payment-field">
               <label>Payment Reference</label>
@@ -845,7 +839,6 @@ client@example.com</textarea>
       </div>
 
       <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap; padding-top:16px; border-top:1px solid var(--border)">
-        <button id="updatePreview">Update Preview</button>
         <button id="printBtn" class="ghost">Print</button>
         <button id="downloadPDF">Download PDF</button>
         <button id="saveJson" class="ghost">Save JSON</button>

@@ -136,7 +136,6 @@
     addItemBtn: $('addItem'),
     clearItemsBtn: $('clearItems'),
     duplicateLastBtn: $('duplicateLast'),
-    updatePreviewBtn: $('updatePreview'),
     printBtn: $('printBtn'),
     downloadPDFBtn: $('downloadPDF'),
     previewArea: $('previewArea'),
@@ -164,7 +163,6 @@
     updatePaymentFieldLabels(AppState.currentRegion);
 
     renderItemsInputHead();
-    createRow('Consulting services', 2, 150, parseFloat(elements.taxPct.value||0));
     updatePreview();
     updateQRCode();
 
@@ -175,14 +173,13 @@
     elements.logoUpload.addEventListener('change', handleLogoUpload);
 
     elements.addItemBtn.addEventListener('click', () => {
-      createRow('New item', 1, 0);
+      createRow('', 1, 0);
       showNotification('New item added', 'success');
     });
 
     elements.clearItemsBtn.addEventListener('click', () => {
       if (elements.itemsBody.querySelectorAll('tr').length > 0 && confirm('Are you sure you want to clear all items?')) {
         elements.itemsBody.innerHTML = '';
-        createRow('Consulting services', 1, 150);
         updateItemsCount();
         updatePreview();
         showNotification('All items cleared', 'success');
@@ -192,7 +189,6 @@
     elements.duplicateLastBtn.addEventListener('click', duplicateLastItem);
     elements.resetFormBtn.addEventListener('click', resetForm);
 
-    elements.updatePreviewBtn.addEventListener('click', updatePreview);
     elements.printBtn.addEventListener('click', handlePrint);
     elements.downloadPDFBtn.addEventListener('click', exportPDF);
     elements.saveJsonBtn.addEventListener('click', saveJSON);
@@ -980,8 +976,6 @@
         if (!item || typeof item !== 'object' || Array.isArray(item)) return;
         createRow(item.desc, item.qty, item.price, item.vatPct);
       });
-    } else {
-      createRow('Consulting services', 1, 150);
     }
 
     clearInvoiceValidation();
@@ -991,22 +985,22 @@
 
   function resetForm() {
     if (confirm('Are you sure you want to reset the form? All data will be lost.')) {
-      elements.seller.value = 'Acme Co.\n123 Business Road\nbusiness@acme.example\n+1 555 0123';
-      elements.buyer.value = 'Client Ltd.\n45 Client Ave.\nclient@example.com';
-      elements.invoiceNo.value = 'INV-1001';
+      elements.seller.value = '';
+      elements.buyer.value = '';
+      elements.invoiceNo.value = '';
       elements.invoiceDate.value = todayDateValue();
       elements.dueDate.value = addDaysDateValue(14);
       elements.currency.value = '$';
       elements.region.value = 'us';
       elements.taxPct.value = '0';
       elements.discount.value = '0';
-      elements.notes.value = 'Thank you for your business. Payment due within 14 days.';
+      elements.notes.value = '';
       elements.sellerVAT.value = '';
       elements.buyerVAT.value = '';
-      elements.bankName.value = 'Global Bank Inc.';
-      elements.accountHolder.value = 'Acme Co.';
-      elements.accountNumber.value = 'XXXX-XXXX-XXXX-1234';
-      elements.routingCode.value = 'ROUTING-123';
+      elements.bankName.value = '';
+      elements.accountHolder.value = '';
+      elements.accountNumber.value = '';
+      elements.routingCode.value = '';
       elements.paymentReference.value = '';
       elements.qrContent.value = '';
 
@@ -1014,7 +1008,7 @@
       AppState.logoDataUrl = '';
 
       elements.itemsBody.innerHTML = '';
-      createRow('Consulting services', 1, 150);
+      updateItemsCount();
 
       clearInvoiceValidation();
       handleRegionChange();
