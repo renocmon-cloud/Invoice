@@ -767,7 +767,6 @@ client@example.com</textarea>
         <button id="addItem">+ Add item</button>
         <button id="clearItems" class="ghost">Clear all</button>
         <button id="duplicateLast" class="ghost">Duplicate last</button>
-        <button id="addTaxItem" class="ghost">Add tax item</button>
       </div>
 
       <label style="margin-top:16px">Discount (flat)</label>
@@ -952,7 +951,6 @@ client@example.com</textarea>
     addItemBtn: $('addItem'),
     clearItemsBtn: $('clearItems'),
     duplicateLastBtn: $('duplicateLast'),
-    addTaxItemBtn: $('addTaxItem'),
     updatePreviewBtn: $('updatePreview'),
     printBtn: $('printBtn'),
     downloadPDFBtn: $('downloadPDF'),
@@ -1005,7 +1003,6 @@ client@example.com</textarea>
     });
     
     elements.duplicateLastBtn.addEventListener('click', duplicateLastItem);
-    elements.addTaxItemBtn.addEventListener('click', addTaxItem);
     elements.resetFormBtn.addEventListener('click', resetForm);
     
     elements.updatePreviewBtn.addEventListener('click', updatePreview);
@@ -1194,25 +1191,6 @@ client@example.com</textarea>
     
     createRow(desc, qty, price, vatPct);
     showNotification('Last item duplicated', 'success');
-  }
-
-  function addTaxItem() {
-    const items = collectItems();
-    if (items.length === 0) {
-      showNotification('Add some items first', 'error');
-      return;
-    }
-    
-    const subtotal = calculateSubtotal(items);
-    const taxPct = parseFloat(elements.taxPct.value) || 0;
-    const taxAmount = subtotal * taxPct / 100;
-    
-    if (taxAmount > 0) {
-      createRow(`Tax (${taxPct}%)`, 1, taxAmount, 0);
-      showNotification('Tax item added', 'success');
-    } else {
-      showNotification('Set tax percentage first', 'error');
-    }
   }
 
   function collectItems() {
