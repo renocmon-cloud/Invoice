@@ -960,8 +960,11 @@ client@example.com</textarea>
   const elements = {
     logoUpload: $('logoUpload'),
     seller: $('seller'),
+    sellerError: $('sellerError'),
     buyer: $('buyer'),
+    buyerError: $('buyerError'),
     invoiceNo: $('invoiceNo'),
+    invoiceNoError: $('invoiceNoError'),
     invoiceDate: $('invoiceDate'),
     dueDate: $('dueDate'),
     currency: $('currency'),
@@ -972,6 +975,7 @@ client@example.com</textarea>
     itemsInputHead: $('itemsInputHead'),
     itemsBody: $('itemsBody'),
     itemsCount: $('itemsCount'),
+    itemsError: $('itemsError'),
     addItemBtn: $('addItem'),
     clearItemsBtn: $('clearItems'),
     duplicateLastBtn: $('duplicateLast'),
@@ -1050,6 +1054,15 @@ client@example.com</textarea>
       el.addEventListener('input', () => {
         if (el === elements.region) {
           handleRegionChange();
+        }
+        if (el === elements.seller && el.value.trim()) {
+          setValidationError(elements.seller, elements.sellerError, '');
+        }
+        if (el === elements.buyer && el.value.trim()) {
+          setValidationError(elements.buyer, elements.buyerError, '');
+        }
+        if (el === elements.invoiceNo && el.value.trim()) {
+          setValidationError(elements.invoiceNo, elements.invoiceNoError, '');
         }
         schedulePreviewUpdate();
       });
@@ -1239,6 +1252,9 @@ client@example.com</textarea>
     inputs.forEach(input => {
       input.addEventListener('input', () => {
         calculateRow(row);
+        if (collectItems().length) {
+          setValidationError(null, elements.itemsError, '');
+        }
         schedulePreviewUpdate();
       });
     });
@@ -1247,6 +1263,9 @@ client@example.com</textarea>
     
     elements.itemsBody.appendChild(row);
     updateItemsCount();
+    if (collectItems().length) {
+      setValidationError(null, elements.itemsError, '');
+    }
     return row;
   }
 
@@ -1286,13 +1305,13 @@ client@example.com</textarea>
     const items = [];
     
     rows.forEach(row => {
-      const desc = row.querySelector('.item-desc').value;
+      const desc = row.querySelector('.item-desc').value.trim();
       const qty = boundedNumber(row.querySelector('.item-qty').value, 0, itemLimits.quantity);
       const price = boundedNumber(row.querySelector('.item-price').value, 0, itemLimits.price);
       const vatInput = row.querySelector('.item-vat');
       const vatPct = vatInput ? boundedNumber(vatInput.value, 0, itemLimits.vat) : 0;
       
-      if (desc && (qty > 0 || price > 0)) {
+      if (desc && qty > 0) {
         items.push({
           desc: desc,
           qty: qty,
@@ -1304,6 +1323,54 @@ client@example.com</textarea>
     });
     
     return items;
+  }
+
+  function setValidationError(field, errorElement, message) {
+    errorElement.textContent = message;
+    errorElement.style.display = message ? 'block' : 'none';
+
+    if (field) {
+      if (message) {
+        field.setAttribute('aria-invalid', 'true');
+      } else {
+        field.removeAttribute('aria-invalid');
+      }
+    }
+  }
+
+  function validateInvoice() {
+    const requiredFields = [
+      [elements.seller, elements.sellerError, 'Seller is required'],
+      [elements.buyer, elements.buyerError, 'Buyer is required'],
+      [elements.invoiceNo, elements.invoiceNoError, 'Invoice number is required']
+    ];
+    let firstInvalidField = null;
+    let isValid = true;
+
+    requiredFields.forEach(([field, errorElement, message]) => {
+      const fieldIsValid = Boolean(field.value.trim());
+      setValidationError(field, errorElement, fieldIsValid ? '' : message);
+      if (!fieldIsValid && !firstInvalidField) firstInvalidField = field;
+      isValid = isValid && fieldIsValid;
+    });
+
+    const hasItems = collectItems().length > 0;
+    setValidationError(null, elements.itemsError, hasItems ? '' : 'Add at least one invoice item');
+    isValid = isValid && hasItems;
+
+    if (!isValid) {
+      showNotification('Fill in the required invoice fields', 'error');
+      if (firstInvalidField) firstInvalidField.focus();
+    }
+
+    return isValid;
+  }
+
+  function clearInvoiceValidation() {
+    setValidationError(elements.seller, elements.sellerError, '');
+    setValidationError(elements.buyer, elements.buyerError, '');
+    setValidationError(elements.invoiceNo, elements.invoiceNoError, '');
+    setValidationError(null, elements.itemsError, '');
   }
 
   function calculateSubtotal(items) {
@@ -1524,10 +1591,13 @@ client@example.com</textarea>
   }
 
   function handlePrint() {
+    if (!validateInvoice()) return;
     window.print();
   }
-  
+
   async function exportPDF() {
+    if (!validateInvoice()) return;
+
     try {
       elements.downloadPDFBtn.disabled = true;
       elements.downloadPDFBtn.textContent = 'Generating PDF...';
@@ -1574,6 +1644,8 @@ client@example.com</textarea>
   }
 
   function saveJSON() {
+    if (!validateInvoice()) return;
+
     const accountFields = elements.region.value === 'eu'
       ? {
           iban: elements.accountNumber.value,
@@ -1745,7 +1817,8 @@ client@example.com</textarea>
     } else {
       createRow('Consulting services', 1, 150);
     }
-    
+
+    clearInvoiceValidation();
     handleRegionChange();
     updatePreview();
   }
@@ -1773,10 +1846,11 @@ client@example.com</textarea>
       
       elements.logoUpload.value = '';
       AppState.logoDataUrl = '';
-      
+
       elements.itemsBody.innerHTML = '';
       createRow('Consulting services', 1, 150);
-      
+
+      clearInvoiceValidation();
       handleRegionChange();
       updatePreview();
       
