@@ -1105,9 +1105,14 @@ client@example.com</textarea>
       
       currentItems.forEach(item => {
         if (newRegion === 'eu') {
-          createRow(item.desc || '', item.qty || 1, item.price || 0, item.vatPct || parseFloat(elements.taxPct.value || 0));
+          createRow(
+            item.desc ?? '',
+            item.qty ?? 1,
+            item.price ?? 0,
+            item.vatPct ?? parseFloat(elements.taxPct.value || 0)
+          );
         } else {
-          createRow(item.desc || '', item.qty || 1, item.price || 0, 0);
+          createRow(item.desc ?? '', item.qty ?? 1, item.price ?? 0, 0);
         }
       });
       
@@ -1151,38 +1156,86 @@ client@example.com</textarea>
     }
   }
 
+  const itemLimits = {
+    quantity: 1000000,
+    price: 1000000000000,
+    vat: 100,
+    count: 500
+  };
+
+  function boundedNumber(value, min, max, fallback = 0) {
+    if (value === '' || value === null || value === undefined) return fallback;
+    const number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    return Math.min(max, Math.max(min, number));
+  }
+
+  function createNumberInput(className, value, max) {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = className;
+    input.value = String(value);
+    input.min = '0';
+    input.max = String(max);
+    input.step = '0.01';
+    return input;
+  }
+
+  function appendInputCell(row, input) {
+    const cell = document.createElement('td');
+    cell.appendChild(input);
+    row.appendChild(cell);
+  }
+
   function createRow(desc = '', qty = 1, price = 0, vatPct = 0) {
     const isEU = elements.region.value === 'eu';
     const row = document.createElement('tr');
-    
+    const safeQty = boundedNumber(qty, 0, itemLimits.quantity, 1);
+    const safePrice = boundedNumber(price, 0, itemLimits.price);
+    const safeVat = boundedNumber(vatPct, 0, itemLimits.vat);
+
+    const descInput = document.createElement('input');
+    descInput.type = 'text';
+    descInput.className = 'item-desc';
+    descInput.value = typeof desc === 'string' ? desc.slice(0, 500) : '';
+    descInput.placeholder = 'Item description';
+    descInput.maxLength = 500;
+
+    const qtyInput = createNumberInput('item-qty', safeQty, itemLimits.quantity);
+    const priceInput = createNumberInput('item-price', safePrice, itemLimits.price);
+    const inputs = [descInput, qtyInput, priceInput];
+
+    appendInputCell(row, descInput);
+    appendInputCell(row, qtyInput);
+    appendInputCell(row, priceInput);
+
     if (isEU) {
-      row.innerHTML = `
-        <td><input type="text" class="item-desc" value="${escapeHtml(desc)}" placeholder="Item description" /></td>
-        <td><input type="number" class="item-qty" value="${qty}" min="0" step="0.01" /></td>
-        <td><input type="number" class="item-price" value="${price}" min="0" step="0.01" /></td>
-        <td><input type="number" class="item-vat" value="${vatPct}" min="0" max="100" step="0.01" /></td>
-        <td>
-          <div class="item-amount" style="padding:8px 4px">${formatCurrency(qty * price, elements.currency.value)}</div>
-          <div class="actions">
-            <button class="ghost remove-item" type="button" style="padding:4px 8px;font-size:11px" aria-label="Remove item">✕</button>
-          </div>
-        </td>
-      `;
-    } else {
-      row.innerHTML = `
-        <td><input type="text" class="item-desc" value="${escapeHtml(desc)}" placeholder="Item description" /></td>
-        <td><input type="number" class="item-qty" value="${qty}" min="0" step="0.01" /></td>
-        <td><input type="number" class="item-price" value="${price}" min="0" step="0.01" /></td>
-        <td>
-          <div class="item-amount" style="padding:8px 4px">${formatCurrency(qty * price, elements.currency.value)}</div>
-          <div class="actions">
-            <button class="ghost remove-item" type="button" style="padding:4px 8px;font-size:11px" aria-label="Remove item">✕</button>
-          </div>
-        </td>
-      `;
+      const vatInput = createNumberInput('item-vat', safeVat, itemLimits.vat);
+      inputs.push(vatInput);
+      appendInputCell(row, vatInput);
     }
-    
-    const inputs = row.querySelectorAll('input');
+
+    const amountCell = document.createElement('td');
+    const amount = document.createElement('div');
+    amount.className = 'item-amount';
+    amount.style.padding = '8px 4px';
+    amount.textContent = formatCurrency(safeQty * safePrice, elements.currency.value);
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'ghost remove-item';
+    removeButton.style.padding = '4px 8px';
+    removeButton.style.fontSize = '11px';
+    removeButton.setAttribute('aria-label', 'Remove item');
+    removeButton.textContent = '✕';
+
+    actions.appendChild(removeButton);
+    amountCell.append(amount, actions);
+    row.appendChild(amountCell);
+
     inputs.forEach(input => {
       input.addEventListener('input', () => {
         calculateRow(row);
@@ -1190,7 +1243,7 @@ client@example.com</textarea>
       });
     });
 
-    row.querySelector('.remove-item').addEventListener('click', () => removeRow(row));
+    removeButton.addEventListener('click', () => removeRow(row));
     
     elements.itemsBody.appendChild(row);
     updateItemsCount();
@@ -1198,8 +1251,8 @@ client@example.com</textarea>
   }
 
   function calculateRow(row) {
-    const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    const qty = boundedNumber(row.querySelector('.item-qty').value, 0, itemLimits.quantity);
+    const price = boundedNumber(row.querySelector('.item-price').value, 0, itemLimits.price);
     const amountCell = row.querySelector('.item-amount');
     
     if (amountCell) {
@@ -1234,10 +1287,10 @@ client@example.com</textarea>
     
     rows.forEach(row => {
       const desc = row.querySelector('.item-desc').value;
-      const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-      const price = parseFloat(row.querySelector('.item-price').value) || 0;
+      const qty = boundedNumber(row.querySelector('.item-qty').value, 0, itemLimits.quantity);
+      const price = boundedNumber(row.querySelector('.item-price').value, 0, itemLimits.price);
       const vatInput = row.querySelector('.item-vat');
-      const vatPct = vatInput ? parseFloat(vatInput.value) || 0 : 0;
+      const vatPct = vatInput ? boundedNumber(vatInput.value, 0, itemLimits.vat) : 0;
       
       if (desc && (qty > 0 || price > 0)) {
         items.push({
@@ -1624,8 +1677,16 @@ client@example.com</textarea>
     if ('dueDate' in data) elements.dueDate.value = data.dueDate ?? '';
     if ('currency' in data) elements.currency.value = data.currency ?? '';
     if ('region' in data) elements.region.value = data.region ?? '';
-    if ('taxPct' in data) elements.taxPct.value = data.taxPct ?? '';
-    if ('discount' in data) elements.discount.value = data.discount ?? '';
+    if ('taxPct' in data) {
+      elements.taxPct.value = data.taxPct === ''
+        ? ''
+        : boundedNumber(data.taxPct, 0, 100);
+    }
+    if ('discount' in data) {
+      elements.discount.value = data.discount === ''
+        ? ''
+        : boundedNumber(data.discount, 0, itemLimits.price);
+    }
     if ('notes' in data) elements.notes.value = data.notes ?? '';
     if ('sellerVAT' in data) elements.sellerVAT.value = data.sellerVAT ?? '';
     if ('buyerVAT' in data) elements.buyerVAT.value = data.buyerVAT ?? '';
@@ -1674,11 +1735,12 @@ client@example.com</textarea>
       }
       if ('qrContent' in paymentDetails) elements.qrContent.value = paymentDetails.qrContent ?? '';
     }
-    
+
     elements.itemsBody.innerHTML = '';
-    if (data.items && Array.isArray(data.items)) {
-      data.items.forEach(item => {
-        createRow(item.desc, item.qty, item.price, item.vatPct || 0);
+    if (Array.isArray(data.items)) {
+      data.items.slice(0, itemLimits.count).forEach(item => {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) return;
+        createRow(item.desc, item.qty, item.price, item.vatPct);
       });
     } else {
       createRow('Consulting services', 1, 150);
