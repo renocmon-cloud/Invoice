@@ -788,11 +788,11 @@ client@example.com</textarea>
               <input id="accountHolder" type="text" placeholder="Account holder name" value="Acme Co." />
             </div>
             <div class="payment-field">
-              <label>Account Number</label>
+              <label id="accountNumberLabel">Account Number</label>
               <input id="accountNumber" type="text" placeholder="Account number" value="XXXX-XXXX-XXXX-1234" />
             </div>
             <div class="payment-field">
-              <label>Routing / SWIFT Code</label>
+              <label id="routingCodeLabel">Routing / SWIFT Code</label>
               <input id="routingCode" type="text" placeholder="Routing or SWIFT code" value="ROUTING-123" />
             </div>
             <div class="payment-field">
@@ -817,8 +817,6 @@ client@example.com</textarea>
         <input id="sellerVAT" type="text" placeholder="VAT / Tax ID" />
         <label>Buyer VAT number</label>
         <input id="buyerVAT" type="text" placeholder="Client VAT ID" />
-        <label>Bank details (IBAN / SWIFT)</label>
-        <textarea id="bankDetails" rows="2" placeholder="IBAN, SWIFT, bank name"></textarea>
       </div>
 
       <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap; padding-top:16px; border-top:1px solid var(--border)">
@@ -958,14 +956,15 @@ client@example.com</textarea>
     euExtras: $('euExtras'),
     sellerVAT: $('sellerVAT'),
     buyerVAT: $('buyerVAT'),
-    bankDetails: $('bankDetails'),
     saveJsonBtn: $('saveJson'),
     loadJsonBtn: $('loadJson'),
     resetFormBtn: $('resetForm'),
     qrContent: $('qrContent'),
     bankName: $('bankName'),
     accountHolder: $('accountHolder'),
+    accountNumberLabel: $('accountNumberLabel'),
     accountNumber: $('accountNumber'),
+    routingCodeLabel: $('routingCodeLabel'),
     routingCode: $('routingCode'),
     paymentReference: $('paymentReference')
   };
@@ -973,9 +972,10 @@ client@example.com</textarea>
   function initApp() {
     elements.invoiceDate.value = todayISO();
     elements.dueDate.value = addDaysISO(14);
-    
+
     AppState.currentRegion = elements.region.value;
-    
+    updatePaymentFieldLabels(AppState.currentRegion);
+
     renderItemsInputHead();
     createRow('Consulting services', 2, 150, parseFloat(elements.taxPct.value||0));
     updatePreview();
@@ -1012,10 +1012,10 @@ client@example.com</textarea>
     elements.loadJsonBtn.addEventListener('click', handleLoadJSON);
     
     const autoUpdateElements = [
-      elements.seller, elements.buyer, elements.invoiceNo, elements.invoiceDate, 
-      elements.dueDate, elements.currency, elements.region, elements.taxPct, 
-      elements.discount, elements.notes, elements.sellerVAT, elements.buyerVAT, 
-      elements.bankDetails, elements.bankName, elements.accountHolder, 
+      elements.seller, elements.buyer, elements.invoiceNo, elements.invoiceDate,
+      elements.dueDate, elements.currency, elements.region, elements.taxPct,
+      elements.discount, elements.notes, elements.sellerVAT, elements.buyerVAT,
+      elements.bankName, elements.accountHolder,
       elements.accountNumber, elements.routingCode, elements.paymentReference,
       elements.qrContent
     ];
@@ -1069,6 +1069,7 @@ client@example.com</textarea>
 
   function handleRegionChange() {
     const newRegion = elements.region.value;
+    updatePaymentFieldLabels(newRegion);
     
     if (newRegion !== AppState.currentRegion) {
       AppState.currentRegion = newRegion;
@@ -1089,6 +1090,14 @@ client@example.com</textarea>
       renderItemsInputHead();
       updatePreview();
     }
+  }
+
+  function updatePaymentFieldLabels(region) {
+    const isEU = region === 'eu';
+    elements.accountNumberLabel.textContent = isEU ? 'IBAN' : 'Account Number';
+    elements.accountNumber.placeholder = isEU ? 'International bank account number' : 'Account number';
+    elements.routingCodeLabel.textContent = isEU ? 'BIC / SWIFT' : 'Routing / SWIFT Code';
+    elements.routingCode.placeholder = isEU ? 'BIC or SWIFT code' : 'Routing or SWIFT code';
   }
 
   function renderItemsInputHead() {
@@ -1248,22 +1257,31 @@ client@example.com</textarea>
     AppState.updateTimeout = setTimeout(updatePreview, 300);
   }
 
+  function buildPaymentQRText(amount, reference) {
+    const isEU = elements.region.value === 'eu';
+    const accountLabel = isEU ? 'IBAN' : 'Account';
+    const routingLabel = isEU ? 'BIC/SWIFT' : 'Routing/SWIFT';
+    const lines = [
+      `Bank: ${elements.bankName.value || ''}`,
+      `Account holder: ${elements.accountHolder.value || ''}`,
+      `${accountLabel}: ${elements.accountNumber.value || ''}`,
+      `Reference: ${reference}`,
+      `Amount: ${formatCurrency(amount, elements.currency.value)}`
+    ];
+
+    if (elements.routingCode.value) {
+      lines.push(`${routingLabel}: ${elements.routingCode.value}`);
+    }
+
+    return lines.join('\n');
+  }
+
   function updateQRCode() {
     let qrText = elements.qrContent.value.trim();
-    
+
     if (!qrText) {
-      const bankName = elements.bankName.value || '';
-      const accountHolder = elements.accountHolder.value || '';
-      const accountNumber = elements.accountNumber.value || '';
-      const routingCode = elements.routingCode.value || '';
       const reference = elements.paymentReference.value || elements.invoiceNo.value || '';
-      const amount = calculateTotal();
-      
-      qrText = `Bank: ${bankName}\nAccount: ${accountHolder}\nIBAN/Acc#: ${accountNumber}\nReference: ${reference}\nAmount: ${formatCurrency(amount, elements.currency.value)}`;
-      
-      if (routingCode) {
-        qrText += `\nRouting/SWIFT: ${routingCode}`;
-      }
+      qrText = buildPaymentQRText(calculateTotal(), reference);
     }
     
     generateQRCode(qrText, 'qrCode');
@@ -1338,9 +1356,11 @@ client@example.com</textarea>
     const accountNumber = elements.accountNumber.value || '';
     const routingCode = elements.routingCode.value || '';
     const paymentReference = elements.paymentReference.value || elements.invoiceNo.value || '';
-    
+    const accountLabel = isEU ? 'IBAN' : 'Account Number';
+    const routingLabel = isEU ? 'BIC / SWIFT' : 'Routing / SWIFT';
+
     let paymentDetailsHTML = '';
-    if (bankName || accountHolder || accountNumber) {
+    if (bankName || accountHolder || accountNumber || routingCode) {
       paymentDetailsHTML = `
         <div class="payment-preview">
           <h4>Payment Details</h4>
@@ -1348,8 +1368,8 @@ client@example.com</textarea>
             <div class="payment-info-preview">
               ${bankName ? `<div><strong>Bank:</strong> ${escapeHtml(bankName)}</div>` : ''}
               ${accountHolder ? `<div><strong>Account Holder:</strong> ${escapeHtml(accountHolder)}</div>` : ''}
-              ${accountNumber ? `<div><strong>Account Number:</strong> ${escapeHtml(accountNumber)}</div>` : ''}
-              ${routingCode ? `<div><strong>Routing/SWIFT:</strong> ${escapeHtml(routingCode)}</div>` : ''}
+              ${accountNumber ? `<div><strong>${accountLabel}:</strong> ${escapeHtml(accountNumber)}</div>` : ''}
+              ${routingCode ? `<div><strong>${routingLabel}:</strong> ${escapeHtml(routingCode)}</div>` : ''}
               ${paymentReference ? `<div><strong>Reference:</strong> ${escapeHtml(paymentReference)}</div>` : ''}
             </div>
             <div class="qr-preview" id="qrPreview"></div>
@@ -1360,13 +1380,9 @@ client@example.com</textarea>
     
     setTimeout(() => {
       let qrText = elements.qrContent.value.trim();
-      
+
       if (!qrText) {
-        qrText = `Bank: ${bankName}\nAccount: ${accountHolder}\nIBAN/Acc#: ${accountNumber}\nReference: ${paymentReference}\nAmount: ${formatCurrency(total, elements.currency.value)}`;
-        
-        if (routingCode) {
-          qrText += `\nRouting/SWIFT: ${routingCode}`;
-        }
+        qrText = buildPaymentQRText(total, paymentReference);
       }
       
       generateQRCode(qrText, 'qrPreview');
@@ -1483,8 +1499,18 @@ client@example.com</textarea>
       elements.downloadPDFBtn.classList.remove('loading');
     }
   }
-  
+
   function saveJSON() {
+    const accountFields = elements.region.value === 'eu'
+      ? {
+          iban: elements.accountNumber.value,
+          bicSwift: elements.routingCode.value
+        }
+      : {
+          accountNumber: elements.accountNumber.value,
+          routingCode: elements.routingCode.value
+        };
+
     const data = {
       seller: elements.seller.value,
       buyer: elements.buyer.value,
@@ -1498,13 +1524,11 @@ client@example.com</textarea>
       notes: elements.notes.value,
       sellerVAT: elements.sellerVAT.value,
       buyerVAT: elements.buyerVAT.value,
-      bankDetails: elements.bankDetails.value,
       items: collectItems(),
       paymentDetails: {
         bankName: elements.bankName.value,
         accountHolder: elements.accountHolder.value,
-        accountNumber: elements.accountNumber.value,
-        routingCode: elements.routingCode.value,
+        ...accountFields,
         paymentReference: elements.paymentReference.value,
         qrContent: elements.qrContent.value
       }
@@ -1546,7 +1570,27 @@ client@example.com</textarea>
     
     input.click();
   }
-  
+
+  function parseBankDetails(value) {
+    const details = {};
+    const fields = value.split(/\r?\n|,/).map(part => part.trim()).filter(Boolean);
+
+    fields.forEach(field => {
+      const match = field.match(/^(iban|bic|swift|bank(?: name)?|account holder)\s*:\s*(.+)$/i);
+      if (!match) return;
+
+      const name = match[1].toLowerCase();
+      const fieldValue = match[2].trim();
+      if (name === 'iban') details.iban = fieldValue;
+      if (name === 'bic' || name === 'swift') details.bicSwift = fieldValue;
+      if (name.startsWith('bank')) details.bankName = fieldValue;
+      if (name === 'account holder') details.accountHolder = fieldValue;
+    });
+
+    if (!details.iban && value.trim()) details.iban = value.trim();
+    return details;
+  }
+
   function loadJSONData(data) {
     if (data.seller) elements.seller.value = data.seller;
     if (data.buyer) elements.buyer.value = data.buyer;
@@ -1560,15 +1604,27 @@ client@example.com</textarea>
     if (data.notes) elements.notes.value = data.notes;
     if (data.sellerVAT) elements.sellerVAT.value = data.sellerVAT;
     if (data.buyerVAT) elements.buyerVAT.value = data.buyerVAT;
-    if (data.bankDetails) elements.bankDetails.value = data.bankDetails;
-    
-    if (data.paymentDetails) {
-      if (data.paymentDetails.bankName) elements.bankName.value = data.paymentDetails.bankName;
-      if (data.paymentDetails.accountHolder) elements.accountHolder.value = data.paymentDetails.accountHolder;
-      if (data.paymentDetails.accountNumber) elements.accountNumber.value = data.paymentDetails.accountNumber;
-      if (data.paymentDetails.routingCode) elements.routingCode.value = data.paymentDetails.routingCode;
-      if (data.paymentDetails.paymentReference) elements.paymentReference.value = data.paymentDetails.paymentReference;
-      if (data.paymentDetails.qrContent) elements.qrContent.value = data.paymentDetails.qrContent;
+
+    if (data.paymentDetails || data.bankDetails) {
+      const paymentDetails = data.paymentDetails || {};
+      const legacyDetails = data.bankDetails && !paymentDetails.iban
+        ? parseBankDetails(data.bankDetails)
+        : {};
+
+      if (legacyDetails.bankName || paymentDetails.bankName) {
+        elements.bankName.value = legacyDetails.bankName || paymentDetails.bankName;
+      }
+      if (legacyDetails.accountHolder || paymentDetails.accountHolder) {
+        elements.accountHolder.value = legacyDetails.accountHolder || paymentDetails.accountHolder;
+      }
+      if (paymentDetails.iban || legacyDetails.iban || paymentDetails.accountNumber) {
+        elements.accountNumber.value = paymentDetails.iban || legacyDetails.iban || paymentDetails.accountNumber;
+      }
+      if (paymentDetails.bicSwift || legacyDetails.bicSwift || paymentDetails.routingCode) {
+        elements.routingCode.value = paymentDetails.bicSwift || legacyDetails.bicSwift || paymentDetails.routingCode;
+      }
+      if (paymentDetails.paymentReference) elements.paymentReference.value = paymentDetails.paymentReference;
+      if (paymentDetails.qrContent) elements.qrContent.value = paymentDetails.qrContent;
     }
     
     elements.itemsBody.innerHTML = '';
@@ -1598,7 +1654,6 @@ client@example.com</textarea>
       elements.notes.value = 'Thank you for your business. Payment due within 14 days.';
       elements.sellerVAT.value = '';
       elements.buyerVAT.value = '';
-      elements.bankDetails.value = '';
       elements.bankName.value = 'Global Bank Inc.';
       elements.accountHolder.value = 'Acme Co.';
       elements.accountNumber.value = 'XXXX-XXXX-XXXX-1234';
