@@ -55,14 +55,23 @@
     const subtotal = items.reduce((sum, item) => {
       return sum + Number(item.qty || 0) * Number(item.price || 0);
     }, 0);
-    const discount = Math.max(0, Number(invoice.discount) || 0);
+    const discount = Math.min(Math.max(0, Number(invoice.discount) || 0), subtotal);
     let tax = 0;
+    let vatBreakdown = [];
 
     if (invoice.region === 'eu') {
-      tax = items.reduce((sum, item) => {
+      const discountFactor = subtotal > 0 ? (subtotal - discount) / subtotal : 0;
+      const vatGroups = new Map();
+      items.forEach(item => {
         const amount = Number(item.qty || 0) * Number(item.price || 0);
-        return sum + amount * (Number(item.vatPct) || 0) / 100;
-      }, 0);
+        const rate = Number(item.vatPct) || 0;
+        vatGroups.set(rate, (vatGroups.get(rate) || 0) + amount);
+      });
+      vatBreakdown = Array.from(vatGroups, ([rate, grossBase]) => {
+        const base = grossBase * discountFactor;
+        return { rate, base, amount: base * rate / 100 };
+      }).sort((a, b) => a.rate - b.rate);
+      tax = vatBreakdown.reduce((sum, entry) => sum + entry.amount, 0);
     } else {
       const taxableAmount = Math.max(0, subtotal - discount);
       tax = taxableAmount * (Number(invoice.taxPct) || 0) / 100;
@@ -72,6 +81,7 @@
       subtotal,
       discount,
       tax,
+      vatBreakdown,
       total: Math.max(0, subtotal - discount + tax)
     };
   }
@@ -247,8 +257,14 @@
       if (totals.discount > 0) {
         lines.push(['Discount', `-${formatAmount(totals.discount, invoice.currency)}`]);
       }
-      if (totals.tax > 0) {
-        lines.push([isEU ? 'VAT' : 'Tax', formatAmount(totals.tax, invoice.currency)]);
+      if (isEU) {
+        totals.vatBreakdown.forEach(entry => {
+          const rate = Number(entry.rate.toFixed(4));
+          const base = formatAmount(entry.base, invoice.currency);
+          lines.push([`VAT ${rate}% (base ${base})`, formatAmount(entry.amount, invoice.currency)]);
+        });
+      } else if (totals.tax > 0) {
+        lines.push(['Tax', formatAmount(totals.tax, invoice.currency)]);
       }
       lines.push(['TOTAL', formatAmount(totals.total, invoice.currency)]);
 

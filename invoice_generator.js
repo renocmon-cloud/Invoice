@@ -534,20 +534,46 @@
     return items.reduce((sum, item) => sum + (item.qty * item.price), 0);
   }
 
-  function calculateTax(items, discount = 0) {
+  function calculateTotals(items, discount = 0) {
+    const subtotal = calculateSubtotal(items);
+    const appliedDiscount = Math.min(Math.max(0, discount), subtotal);
     const isEU = elements.region.value === 'eu';
 
     if (isEU) {
-      return items.reduce((sum, item) => {
+      const discountFactor = subtotal > 0 ? (subtotal - appliedDiscount) / subtotal : 0;
+      const vatGroups = new Map();
+
+      items.forEach(item => {
         const itemAmount = item.qty * item.price;
-        return sum + (itemAmount * (item.vatPct || 0) / 100);
-      }, 0);
-    } else {
-      const subtotal = calculateSubtotal(items);
-      const taxableAmount = Math.max(0, subtotal - discount);
-      const taxPct = parseFloat(elements.taxPct.value) || 0;
-      return taxableAmount * taxPct / 100;
+        const rate = Number(item.vatPct) || 0;
+        vatGroups.set(rate, (vatGroups.get(rate) || 0) + itemAmount);
+      });
+
+      const vatBreakdown = Array.from(vatGroups, ([rate, grossBase]) => {
+        const base = grossBase * discountFactor;
+        return { rate, base, amount: base * rate / 100 };
+      }).sort((a, b) => a.rate - b.rate);
+      const taxAmount = vatBreakdown.reduce((sum, entry) => sum + entry.amount, 0);
+
+      return {
+        subtotal,
+        discount: appliedDiscount,
+        vatBreakdown,
+        taxAmount,
+        total: subtotal - appliedDiscount + taxAmount
+      };
     }
+
+    const taxableAmount = subtotal - appliedDiscount;
+    const taxPct = parseFloat(elements.taxPct.value) || 0;
+    const taxAmount = taxableAmount * taxPct / 100;
+    return {
+      subtotal,
+      discount: appliedDiscount,
+      vatBreakdown: [],
+      taxAmount,
+      total: subtotal - appliedDiscount + taxAmount
+    };
   }
 
   function updateItemsCount() {
@@ -592,19 +618,15 @@
 
   function calculateTotal() {
     const items = collectItems();
-    const subtotal = calculateSubtotal(items);
     const discount = parseFloat(elements.discount.value) || 0;
-    const taxAmount = calculateTax(items, discount);
-
-    return Math.max(0, subtotal - discount + taxAmount);
+    return calculateTotals(items, discount).total;
   }
 
   function updatePreview() {
     const items = collectItems();
-    const subtotal = calculateSubtotal(items);
     const discount = parseFloat(elements.discount.value) || 0;
-    const taxAmount = calculateTax(items, discount);
-    const total = Math.max(0, subtotal - discount + taxAmount);
+    const totals = calculateTotals(items, discount);
+    const { subtotal, taxAmount, total, vatBreakdown } = totals;
     const isEU = elements.region.value === 'eu';
 
     let itemsHTML = '';
@@ -637,13 +659,17 @@
       summaryHTML += `<div class="line"><span>Subtotal</span><span>${formatCurrency(subtotal, elements.currency.value)}</span></div>`;
     }
 
-    if (discount > 0) {
-      summaryHTML += `<div class="line"><span>Discount</span><span>-${formatCurrency(discount, elements.currency.value)}</span></div>`;
+    if (totals.discount > 0) {
+      summaryHTML += `<div class="line"><span>Discount</span><span>-${formatCurrency(totals.discount, elements.currency.value)}</span></div>`;
     }
 
-    if (taxAmount > 0) {
-      const taxLabel = isEU ? 'VAT' : 'Tax';
-      summaryHTML += `<div class="line"><span>${taxLabel}</span><span>${formatCurrency(taxAmount, elements.currency.value)}</span></div>`;
+    if (isEU) {
+      vatBreakdown.forEach(entry => {
+        const rate = Number(entry.rate.toFixed(4));
+        summaryHTML += `<div class="line"><span>VAT ${rate}% (base ${formatCurrency(entry.base, elements.currency.value)})</span><span>${formatCurrency(entry.amount, elements.currency.value)}</span></div>`;
+      });
+    } else if (taxAmount > 0) {
+      summaryHTML += `<div class="line"><span>Tax</span><span>${formatCurrency(taxAmount, elements.currency.value)}</span></div>`;
     }
 
     summaryHTML += `<div class="line total"><span>TOTAL</span><span>${formatCurrency(total, elements.currency.value)}</span></div>`;

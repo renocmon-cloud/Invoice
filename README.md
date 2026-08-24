@@ -1,12 +1,12 @@
 # Invoice Generator
 
-Browser-based invoice generator for US and EU invoices. It does not require a backend or build step.
+Browser-based invoice generator with US and EU invoice styles. It does not require a backend or build step. Tax and invoice requirements vary by jurisdiction, so users should verify local legal requirements.
 
 [Live demo](https://www.belcantorest.me/) · [Repository](https://github.com/renocmon-cloud/Invoice)
 
 ## Features
 
-- US tax and EU VAT invoice layouts
+- US tax and EU VAT invoice styles
 - Multiple currencies
 - Editable line items, discounts, notes, and payment details
 - Company logo upload
